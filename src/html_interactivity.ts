@@ -100,13 +100,41 @@ export class Interactive {
         return this.inp_variables[variable_name];
     }
 
-    public label(variable_name : string, value : any, display_format_func : formatFunction = defaultFormat_f){
+    public label(
+        variable_name : string, value : any,
+        color: string = 'white', 
+        markType: 'square' | 'circle' = 'square',
+        markColor: string = '#8B5CF6',
+        display_format_func : formatFunction = defaultFormat_f
+    ){
 
+        let containerDiv = document.createElement('div');
+        containerDiv.classList.add("diagramatics-label-container");
+        containerDiv.style.display = 'flex';
+        containerDiv.style.alignItems = 'center';
+        containerDiv.style.gap = '8px';
+
+        
+        let markDiv = document.createElement('div');
+        markDiv.classList.add("diagramatics-label-mark");
+        markDiv.style.width = '12px';
+        markDiv.style.height = '12px';
+        markDiv.style.backgroundColor = markColor;
+    
+        if (markType === 'circle') {
+            markDiv.style.borderRadius = '50%';
+        }
+    
         let labeldiv = document.createElement('div');
         labeldiv.classList.add("diagramatics-label");
         labeldiv.innerHTML = display_format_func(variable_name, value, this.display_precision);
-
+        labeldiv.style.color = color;
+    
+        containerDiv.appendChild(markDiv);
+        containerDiv.appendChild(labeldiv);
+    
         this.inp_variables[variable_name] = value;
+
 
         // setter ==========================
         const setter = (val : any) => {
@@ -124,7 +152,7 @@ export class Interactive {
         
         let container = document.createElement('div');
         container.classList.add("diagramatics-label-container");
-        container.appendChild(labeldiv);
+        container.appendChild(containerDiv);
 
         this.control_container_div.appendChild(container);
     }

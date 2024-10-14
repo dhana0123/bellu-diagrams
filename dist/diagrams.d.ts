@@ -825,7 +825,7 @@ declare class Interactive {
     draw(): void;
     set(variable_name: string, val: any): void;
     get(variable_name: string): any;
-    label(variable_name: string, value: any, display_format_func?: formatFunction): void;
+    label(variable_name: string, value: any, color?: string, markType?: 'square' | 'circle', markColor?: string, display_format_func?: formatFunction): void;
     /**
      * WARNING: deprecated
      * use `locator_initial_draw` instead
