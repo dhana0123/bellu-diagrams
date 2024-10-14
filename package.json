@@ -1,9 +1,9 @@
 {
-  "name": "bellu-diagramatics",
+  "name": "bellu-diagramas",
   "version": "1.6.3",
   "type": "module",
-  "description": "Interactive Diagram Maker",
-  "main": "dist/diagramatics.js",
+  "description": "Interactive Diagrams",
+  "main": "dist/diagrams.js",
   "scripts": {
     "build": "rollup -c",
     "dev": "rollup -c -w",

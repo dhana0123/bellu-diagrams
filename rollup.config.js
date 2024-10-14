@@ -7,12 +7,12 @@ const js_config = {
   input: "src/index.ts",
   output: [
     {
-      file: `dist/diagramatics.js`,
+      file: `dist/diagrams.js`,
       format: "es",
       sourcemap: true,
     },
     {
-      file: `dist/diagramatics.min.js`,
+      file: `dist/diagrams.min.js`,
       format: "es",
       sourcemap: true,
       plugins: [terser()],
@@ -23,7 +23,7 @@ const js_config = {
 
 const dts_config = {
   input: "src/index.ts",
-  output: { file: `dist/diagramatics.d.ts`, format: "es" },
+  output: { file: `dist/diagrams.d.ts`, format: "es" },
   plugins: [dts()],
 };
 
