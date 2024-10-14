@@ -75,6 +75,7 @@ export * as boxplot from './shapes/shapes_boxplot.js'
 export * as geo_construct from './geo_construct/geo_construct.js'
 export * as tree from './shapes/shapes_tree.js'
 export * as curves from './shapes/shapes_curves.js'
+export * as interactive from "./shapes/shapes_interactive.js"
 
 // Mics
 export * as encoding from './encoding.js'

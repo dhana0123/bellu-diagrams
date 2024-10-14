@@ -3251,7 +3251,7 @@ function arrow1(start, end, headsize = 1) {
  * @param headsize size of the arrow head
  * @returns a Diagram object
  */
-function arrow2(start, end, headsize = 1) {
+function arrow2$1(start, end, headsize = 1) {
     let line_diagram = line$1(start, end).append_tags(TAG.ARROW_LINE);
     let direction = end.sub(start);
     let raw_triangle = polygon([V2(0, 0), V2(-headsize, headsize / 2), V2(-headsize, -headsize / 2)]);
@@ -6994,8 +6994,8 @@ function axes_empty(axes_options) {
     // get the intersection point
     let xorigin = lowerleft.x + (upperright.x - lowerleft.x) / (opt.xrange[1] - opt.xrange[0]) * (0 - opt.xrange[0]);
     let yorigin = lowerleft.y + (upperright.y - lowerleft.y) / (opt.yrange[1] - opt.yrange[0]) * (0 - opt.yrange[0]);
-    let xaxis = arrow2(V2(lowerleft.x, yorigin), V2(upperright.x, yorigin), opt.headsize).append_tags(TAG.GRAPH_AXIS);
-    let yaxis = arrow2(V2(xorigin, lowerleft.y), V2(xorigin, upperright.y), opt.headsize).append_tags(TAG.GRAPH_AXIS);
+    let xaxis = arrow2$1(V2(lowerleft.x, yorigin), V2(upperright.x, yorigin), opt.headsize).append_tags(TAG.GRAPH_AXIS);
+    let yaxis = arrow2$1(V2(xorigin, lowerleft.y), V2(xorigin, upperright.y), opt.headsize).append_tags(TAG.GRAPH_AXIS);
     return diagram_combine(xaxis, yaxis).stroke('gray').fill('gray');
     // return xaxis;
 }
@@ -7229,7 +7229,7 @@ function xaxis(axes_options) {
         opt.bbox = [V2(xmin, ymin), V2(xmax, ymax)];
     }
     let ax_origin = axes_transform(opt)(V2(0, 0));
-    let xaxis = arrow2(V2(opt.bbox[0].x, ax_origin.y), V2(opt.bbox[1].x, ax_origin.y), opt.headsize)
+    let xaxis = arrow2$1(V2(opt.bbox[0].x, ax_origin.y), V2(opt.bbox[1].x, ax_origin.y), opt.headsize)
         .append_tags(TAG.GRAPH_AXIS);
     let xtickmarks = xticks(opt, 0);
     return diagram_combine(xaxis, xtickmarks);
@@ -7247,7 +7247,7 @@ function yaxis(axes_options) {
         opt.bbox = [V2(xmin, ymin), V2(xmax, ymax)];
     }
     let ax_origin = axes_transform(opt)(V2(0, 0));
-    let yaxis = arrow2(V2(ax_origin.x, opt.bbox[0].y), V2(ax_origin.x, opt.bbox[1].y), opt.headsize)
+    let yaxis = arrow2$1(V2(ax_origin.x, opt.bbox[0].y), V2(ax_origin.x, opt.bbox[1].y), opt.headsize)
         .append_tags(TAG.GRAPH_AXIS);
     let ytickmarks = yticks(opt, 0);
     return diagram_combine(yaxis, ytickmarks);
@@ -7695,7 +7695,7 @@ var shapes_bar = /*#__PURE__*/Object.freeze({
  * returns a Diagram
  */
 function axis(xmin, xmax, arrowsize = 1) {
-    return arrow2(V2(xmin, 0), V2(xmax, 0), arrowsize).fill('black').append_tags(TAG.GRAPH_AXIS);
+    return arrow2$1(V2(xmin, 0), V2(xmax, 0), arrowsize).fill('black').append_tags(TAG.GRAPH_AXIS);
 }
 /**
  * Draw a numbered ticks for a numberline
@@ -8009,12 +8009,12 @@ function axes(bar_options = {}) {
     // let ax_f = axes_transform(ax_opt);
     let [lowerleft, upperright] = opt.bbox;
     if (opt.orientation == 'x') {
-        let xaxis = arrow2(V2(lowerleft.x, 0), V2(upperright.x, 0), opt.headsize);
+        let xaxis = arrow2$1(V2(lowerleft.x, 0), V2(upperright.x, 0), opt.headsize);
         let xtickmarks = xticks(ax_opt, 0);
         return diagram_combine(xaxis, xtickmarks).stroke('gray').fill('gray');
     }
     else {
-        let yaxis = arrow2(V2(0, lowerleft.y), V2(0, upperright.y), opt.headsize);
+        let yaxis = arrow2$1(V2(0, lowerleft.y), V2(0, upperright.y), opt.headsize);
         let ytickmarks = yticks(ax_opt, 0);
         return diagram_combine(yaxis, ytickmarks).stroke('gray').fill('gray');
     }
@@ -8585,6 +8585,42 @@ var shapes_curves = /*#__PURE__*/Object.freeze({
     interpolate_cubic_spline: interpolate_cubic_spline
 });
 
+function arrowHead(headsize) {
+    return curve([V2(-headsize, -headsize), V2(0, 0), V2(headsize, -headsize)]).fill('none').move_origin(V2(0, 0)).append_tags(TAG.ARROW_HEAD);
+}
+function arrow2(size, headsize, color) {
+    const arrow = arrowHead(headsize).stroke(color).strokewidth(3).translate(V2(0, size)).strokewidth(2);
+    const arrowline = line$1(V2(0, size), V2(0, -size)).stroke(color).strokewidth(2).append_tags(TAG.ARROW_LINE);
+    const arrowDown = arrow.position(arrowline.get_anchor('bottom-center')).reflect();
+    return diagram_combine(arrow, arrowDown, arrowline).move_origin(arrowline.get_anchor('center-center'));
+}
+function verticalLocator(radius = 3, fill = 'white', color = "#8B5CF6", headsize = 1.2) {
+    const padding = radius * 0.5;
+    const bg_sq = square(radius * 2.4).fill(color).opacity(0.25).apply(round_corner(4)).stroke('none');
+    const sq = square(radius * 2).fill(fill).apply(round_corner(3)).stroke('none');
+    const arr = arrow2(padding, headsize, color);
+    return diagram_combine(bg_sq, sq, arr);
+}
+function horizontalLocator(radius = 3, fill = 'white', color = "#8B5CF6", headsize = 1.2) {
+    return verticalLocator(radius, fill, color, headsize).rotate(Math.PI / 2);
+}
+function spanLocator(radius = 3, fill = 'white', color = "#8B5CF6", headsize = 1.2) {
+    const padding = radius * 0.5;
+    const bg_sq = square(radius * 2.4).fill(color).opacity(0.25).apply(round_corner(4)).stroke('none');
+    const sq = square(radius * 2).fill(fill).apply(round_corner(3)).stroke('none');
+    const ci = circle(padding).stroke('none').fill(color);
+    return diagram_combine(bg_sq, sq, ci);
+}
+
+var shapes_interactive = /*#__PURE__*/Object.freeze({
+    __proto__: null,
+    arrow2: arrow2,
+    arrowHead: arrowHead,
+    horizontalLocator: horizontalLocator,
+    spanLocator: spanLocator,
+    verticalLocator: verticalLocator
+});
+
 // Simple encoding/decoding utilities using btoa, atob and encodeURIComponent, decodeURIComponent
 // can be used to store user code and pass it in the URL
 function encode(s) {
@@ -8600,5 +8636,5 @@ var encoding = /*#__PURE__*/Object.freeze({
     encode: encode
 });
 
-export { Diagram, Interactive, Path, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2, ax, axes_corner_empty, axes_empty, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
+export { Diagram, Interactive, Path, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
 //# sourceMappingURL=diagrams.js.map
