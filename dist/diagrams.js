@@ -1460,6 +1460,36 @@ function multiline_bb(bbstr, linespace, split_by_word = false) {
     return dmulti;
 }
 
+// color from matpltlib's tab20
+const tab_color = {
+    'blue': '#1f77b4',
+    'lightblue': '#aec7e8',
+    'orange': '#ff7f0e',
+    'lightorange': '#ffbb78',
+    'green': '#2ca02c',
+    'lightgreen': '#98df8a',
+    'red': '#d62728',
+    'lightred': '#ff9896',
+    'purple': '#9467bd',
+    'lightpurple': '#c5b0d5',
+    'brown': '#8c564b',
+    'lightbrown': '#c49c94',
+    'pink': '#e377c2',
+    'lightpink': '#f7b6d2',
+    'grey': '#7f7f7f',
+    'lightgrey': '#c7c7c7',
+    'gray': '#7f7f7f',
+    'lightgray': '#c7c7c7',
+    'olive': '#bcbd22',
+    'lightolive': '#dbdb8d',
+    'cyan': '#17becf',
+    'lightcyan': '#9edae5',
+};
+function get_color(colorname, palette) {
+    var _a;
+    return (_a = palette[colorname]) !== null && _a !== void 0 ? _a : colorname;
+}
+
 /**
  * Helper function to convert from degrees to radians
  */
@@ -1610,36 +1640,6 @@ var utils = /*#__PURE__*/Object.freeze({
     to_radian: to_radian,
     transpose: transpose
 });
-
-// color from matpltlib's tab20
-const tab_color = {
-    'blue': '#1f77b4',
-    'lightblue': '#aec7e8',
-    'orange': '#ff7f0e',
-    'lightorange': '#ffbb78',
-    'green': '#2ca02c',
-    'lightgreen': '#98df8a',
-    'red': '#d62728',
-    'lightred': '#ff9896',
-    'purple': '#9467bd',
-    'lightpurple': '#c5b0d5',
-    'brown': '#8c564b',
-    'lightbrown': '#c49c94',
-    'pink': '#e377c2',
-    'lightpink': '#f7b6d2',
-    'grey': '#7f7f7f',
-    'lightgrey': '#c7c7c7',
-    'gray': '#7f7f7f',
-    'lightgray': '#c7c7c7',
-    'olive': '#bcbd22',
-    'lightolive': '#dbdb8d',
-    'cyan': '#17becf',
-    'lightcyan': '#9edae5',
-};
-function get_color(colorname, palette) {
-    var _a;
-    return (_a = palette[colorname]) !== null && _a !== void 0 ? _a : colorname;
-}
 
 const unicode_mathematical_italic = {
     'A': '𝐴', 'B': '𝐵', 'C': '𝐶', 'D': '𝐷', 'E': '𝐸',
@@ -5464,6 +5464,173 @@ class ButtonHandler {
     }
 }
 
+class Content {
+    constructor(contentDiv) {
+        this.elements = [];
+        this.elementMap = new Map();
+        this.nextId = 1;
+        this.contentDiv = contentDiv;
+    }
+    generateId(type) {
+        return `${type}_${this.nextId++}`;
+    }
+    addElement(element, type) {
+        const id = this.generateId(type);
+        element.id = id;
+        this.elements.push(element);
+        this.elementMap.set(id, element);
+        element.appendTo(this.contentDiv); // Append directly here
+        return id;
+    }
+    addHeader(text, level = 1) {
+        const header = new HeaderElement(text, level);
+        return this.addElement(header, "header");
+    }
+    addParagraph(text) {
+        const paragraph = new ParagraphElement(text);
+        return this.addElement(paragraph, "paragraph");
+    }
+    addDrawing(width = 100, height = 100) {
+        const id = this.addSvg(width, height);
+        const svg = this.getDrawingElement(id);
+        let draw = (...diagrams) => {
+            draw_to_svg(svg, diagram_combine(...diagrams));
+        };
+        let int = new Interactive(this.contentDiv, svg);
+        return { draw, int };
+    }
+    addSvg(width = 100, height = 100) {
+        const drawing = new DrawingElement(width, height);
+        return this.addElement(drawing, "drawing");
+    }
+    getElement(id) {
+        return this.elementMap.get(id);
+    }
+    getDomElement(id) {
+        const element = this.elementMap.get(id);
+        if (element) {
+            return this.contentDiv.querySelector(`#${id}`);
+        }
+        return null;
+    }
+    getDrawingElement(drawingId) {
+        const element = this.elementMap.get(drawingId);
+        if (!element) {
+            console.error("Svg not found");
+        }
+        if (element instanceof DrawingElement) {
+            return this.contentDiv.querySelector(`#${drawingId}`);
+        }
+        return null;
+    }
+    removeElement(id) {
+        const element = this.elementMap.get(id);
+        if (element) {
+            const index = this.elements.indexOf(element);
+            if (index > -1) {
+                this.elements.splice(index, 1);
+            }
+            this.elementMap.delete(id);
+            const child = this.contentDiv.querySelector(`#${id}`);
+            if (child) {
+                this.contentDiv.removeChild(child);
+            }
+            return true;
+        }
+        return false;
+    }
+    toJSON() {
+        return {
+            elements: this.elements.map(element => (Object.assign({ id: element.id }, element.toJSON()))),
+            nextId: this.nextId
+        };
+    }
+    static fromJSON(json, div) {
+        const content = new Content(div);
+        content.nextId = json.nextId;
+        json.elements.forEach((elementData) => {
+            let element;
+            switch (elementData.type) {
+                case 'header':
+                    element = HeaderElement.fromJSON(elementData);
+                    break;
+                case 'paragraph':
+                    element = ParagraphElement.fromJSON(elementData);
+                    break;
+                case 'drawing':
+                    element = DrawingElement.fromJSON(elementData);
+                    break;
+                default:
+                    throw new Error(`Unknown element type: ${elementData.type}`);
+            }
+            element.id = elementData.id;
+            content.elements.push(element);
+            content.elementMap.set(element.id, element);
+            element.appendTo(content.contentDiv); // Append during deserialization
+        });
+        return content;
+    }
+}
+class HeaderElement {
+    constructor(text, level) {
+        this.text = text;
+        this.level = level;
+        this.id = '';
+    }
+    appendTo(container) {
+        const header = document.createElement(`h${this.level}`);
+        header.id = this.id;
+        header.textContent = this.text;
+        container.appendChild(header);
+    }
+    toJSON() {
+        return { type: 'header', text: this.text, level: this.level };
+    }
+    static fromJSON(json) {
+        return new HeaderElement(json.text, json.level);
+    }
+}
+class ParagraphElement {
+    constructor(text) {
+        this.text = text;
+        this.id = '';
+    }
+    appendTo(container) {
+        const paragraph = document.createElement('p');
+        paragraph.id = this.id;
+        paragraph.textContent = this.text;
+        container.appendChild(paragraph);
+    }
+    toJSON() {
+        return { type: 'paragraph', text: this.text };
+    }
+    static fromJSON(json) {
+        return new ParagraphElement(json.text);
+    }
+}
+class DrawingElement {
+    constructor(width, height) {
+        this.width = width;
+        this.height = height;
+        this.id = '';
+    }
+    appendTo(container) {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
+        svg.classList.add("drawing");
+        svg.setAttribute("id", this.id);
+        svg.setAttribute("width", `${this.width}px`);
+        svg.setAttribute("height", `${this.height}px`);
+        svg.style.margin = "auto";
+        container.appendChild(svg);
+    }
+    toJSON() {
+        return { type: 'drawing', width: this.width, height: this.height };
+    }
+    static fromJSON(json) {
+        return new DrawingElement(json.width, json.height);
+    }
+}
+
 /**
  * convert a function that modifies a path of a diagram to a function that modifies a diagram
  * if the diagram is a polygon or curve, the function is applied directly to the diagram
@@ -8652,5 +8819,5 @@ var encoding = /*#__PURE__*/Object.freeze({
     encode: encode
 });
 
-export { Diagram, Interactive, Path, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
+export { Content, Diagram, Interactive, Path, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
 //# sourceMappingURL=diagrams.js.map

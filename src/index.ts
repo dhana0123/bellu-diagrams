@@ -2,6 +2,10 @@ export {
     Diagram, Path, polygon, line, curve, empty, text, image, multiline, multiline_bb, diagram_combine,
 } from './diagram.js';
 
+export {
+    Content
+} from "./content.js"
+
 export { 
     Vector2, V2, Vdir, 
 } from './vector.js';

@@ -476,227 +476,6 @@ declare function image(src: string, width: number, height: number): Diagram;
 declare function multiline(spans: ([string] | [string, Partial<TextData>])[]): Diagram;
 declare function multiline_bb(bbstr: string, linespace?: string, split_by_word?: boolean): Diagram;
 
-/**
- * Helper function to convert from degrees to radians
- */
-declare function to_radian(angle: number): number;
-/**
- * Helper function to convert from radians to degrees
- */
-declare function to_degree(angle: number): number;
-declare function array_repeat<T>(arr: T[], len: number): T[];
-/**
- * Create a equivalently spaced array of numbers from start to end (inclusive)
- * [start, end]
- * @param start start value
- * @param end end value
- * @param n number of points
- */
-declare function linspace(start: number, end: number, n?: number): number[];
-/**
- * Create a equivalently spaced array of numbers from start to end (exclusice)
- * [start, end)
- * @param start start value
- * @param end end value
- * @param n number of points
- */
-declare function linspace_exc(start: number, end: number, n?: number): number[];
-/**
- * Create a equivalently spaced array of numbers from start to end (exclusive)
- * [start, end)
- * @param start start value
- * @param end end value
- * @param step step size
- */
-declare function range(start: number, end: number, step?: number): number[];
-/**
- * Create a equivalently spaced array of numbers from start to end (inc)
- * [start, end]
- * @param start start value
- * @param end end value
- * @param step step size
- */
-declare function range_inc(start: number, end: number, step?: number): number[];
-/**
- * Transpose a 2D array
- * if the array is not a rectangle, the transposed array will be padded with undefined
- * @param arr 2D array
- * @returns transposed 2D array
- */
-declare function transpose<T>(arr: T[][]): (T | undefined)[][];
-declare function expand_directional_value(padding: number | number[]): [number, number, number, number];
-
-declare const utils_array_repeat: typeof array_repeat;
-declare const utils_expand_directional_value: typeof expand_directional_value;
-declare const utils_linspace: typeof linspace;
-declare const utils_linspace_exc: typeof linspace_exc;
-declare const utils_range: typeof range;
-declare const utils_range_inc: typeof range_inc;
-declare const utils_to_degree: typeof to_degree;
-declare const utils_to_radian: typeof to_radian;
-declare const utils_transpose: typeof transpose;
-declare namespace utils {
-  export { utils_array_repeat as array_repeat, utils_expand_directional_value as expand_directional_value, utils_linspace as linspace, utils_linspace_exc as linspace_exc, utils_range as range, utils_range_inc as range_inc, utils_to_degree as to_degree, utils_to_radian as to_radian, utils_transpose as transpose };
-}
-
-declare const default_diagram_style: DiagramStyle;
-declare const _init_default_diagram_style: DiagramStyle;
-declare const default_text_diagram_style: DiagramStyle;
-declare const _init_default_text_diagram_style: DiagramStyle;
-declare const default_textdata: TextData;
-declare const _init_default_textdata: TextData;
-declare function reset_default_styles(): void;
-/**
- * Get all svg elements with a specific tag
- * @param svgelement the svg element to search
- * @param tag the tag to search
- * @returns a list of svg elements with the tag
- */
-declare function get_tagged_svg_element(tag: string, svgelement: SVGElement): SVGElement[];
-/**
- * WARNING: DEPRECATED
- * use `draw_to_svg_element` instead
- *
- * Draw a diagram to an svg element
- * @param outer_svgelement the outer svg element to draw to
- * @param diagram the diagram to draw
- * @param set_html_attribute whether to set the html attribute of the outer_svgelement
- * @param render_text whether to render text
- * @param clear_svg whether to clear the svg before drawing
- */
-declare function draw_to_svg(outer_svgelement: SVGSVGElement, diagram: Diagram, set_html_attribute?: boolean, render_text?: boolean, clear_svg?: boolean): void;
-interface draw_to_svg_options {
-    set_html_attribute?: boolean;
-    render_text?: boolean;
-    clear_svg?: boolean;
-    embed_image?: boolean;
-    background_color?: string;
-    padding?: number | number[];
-    text_scaling_reference_svg?: SVGSVGElement;
-    text_scaling_reference_padding?: number | number[];
-    filter_strings?: string[];
-}
-/**
- * Draw a diagram to an svg element
- * @param outer_svgelement the outer svg element to draw to
- * @param diagram the diagram to draw
- * @param options the options for drawing
- * ```typescript
- * options : {
- *    set_html_attribute? : boolean (true),
- *    render_text? : boolean (true),
- *    clear_svg? : boolean (true),
- *    embed_image? : boolean (false),
- *    background_color? : string (undefined),
- *    padding? : number | number[] (10),
- *    text_scaling_reference_svg? : SVGSVGElement (undefined),
- *    text_scaling_reference_padding? : number | number[] (undefined),
- * }
- * ````
- * define `text_scaling_reference_svg` and `text_scaling_reference_padding` to scale text based on another svg element
- */
-declare function draw_to_svg_element(outer_svgelement: SVGSVGElement, diagram: Diagram, options?: draw_to_svg_options): void;
-type texhandler_config = {
-    display: boolean;
-};
-type texhadler_function = (texstr: string, config: texhandler_config) => string;
-/**
- * Recursively handle tex in svg
- * @param svg the svg element to handle
- * @param texhandler the tex handler function
- */
-declare function handle_tex_in_svg(svg: SVGElement, texhandler: texhadler_function): void;
-/**
- * Download the svg as svg file
- * @param outer_svgelement the outer svg element to download
- */
-declare function download_svg_as_svg(outer_svgelement: SVGSVGElement): void;
-/**
- * Download the svg as png file
- * @param outer_svgelement the outer svg element to download
- */
-declare function download_svg_as_png(outer_svgelement: SVGSVGElement): void;
-
-/**
- * Create rectange centered at origin
- * @param width width of the rectangle
- * @param height height of the rectangle
- * @returns a Diagram object
- */
-declare function rectangle(width: number, height: number): Diagram;
-/**
- * Create rectange with a given bottom left corner and top right corner
- * @param bottomleft bottom left corner of the rectangle
- * @param topright top right corner of the rectangle
- * @returns a Diagram object
- */
-declare function rectangle_corner(bottomleft: Vector2, topright: Vector2): Diagram;
-/**
- * Create square centered at origin
- * @param side side length of the square
- * @returns a Diagram object
- */
-declare function square(side?: number): Diagram;
-/**
- * Create regular polygon centered at origin with a given radius
- * @param n number of sides
- * @param radius radius of the polygon
- * @returns a Diagram object
- * \* if you want to create a regular polygon with a given side length, use regular_polygon_side
- */
-declare function regular_polygon(n: number, radius?: number): Diagram;
-/**
- * Create regular polygon centered at origin with a given side length
- * @param n number of sides
- * @param sidelength side length of the polygon
- * @returns a Diagram object
- * \* if you want to create a regular polygon with a given radius, use regular_polygon
- */
-declare function regular_polygon_side(n: number, sidelength?: number): Diagram;
-/**
- * Create circle centered at origin
- * *currently implemented as a regular polygon with 50 sides*
- * @param radius radius of the circle
- * @returns a Diagram object
- */
-declare function circle(radius?: number): Diagram;
-/**
- * Create an arc centered at origin
- * @param radius radius of the arc
- * @param angle angle of the arc
- * @returns a Diagram object
- */
-declare function arc(radius?: number, angle?: number): Diagram;
-/**
- * Create an arrow from origin to a given point
- * @param v the end point of the arrow
- * @param headsize size of the arrow head
- * @returns a Diagram object
- */
-declare function arrow(v: Vector2, headsize?: number): Diagram;
-/**
- * Create an arrow from a given point to another given point
- * @param start the start point of the arrow
- * @param end the end point of the arrow
- * @param headsize size of the arrow head
- * @returns a Diagram object
- */
-declare function arrow1(start: Vector2, end: Vector2, headsize?: number): Diagram;
-/**
- * Create a two-sided arrow from a given point to another given point
- * @param start the start point of the arrow
- * @param end the end point of the arrow
- * @param headsize size of the arrow head
- * @returns a Diagram object
- */
-declare function arrow2$1(start: Vector2, end: Vector2, headsize?: number): Diagram;
-/**
- * Create a text object with mathematical italic font
- * @param str text to be displayed
- * @returns a Diagram object
- */
-declare function textvar(str: string): Diagram;
-
 type VerticalAlignment = 'top' | 'center' | 'bottom';
 type HorizontalAlignment = 'left' | 'center' | 'right';
 /**
@@ -770,9 +549,6 @@ declare function distribute_grid_row(diagrams: Diagram[], column_count: number, 
  * alignment can be 'left', 'center', or 'right'
  */
 declare function distribute_variable_row(diagrams: Diagram[], container_width: number, vertical_space?: number, horizontal_space?: number, vertical_alignment?: VerticalAlignment, horizontal_alignment?: HorizontalAlignment): Diagram;
-
-declare function str_latex_to_unicode(str: string): string;
-declare function str_to_mathematical_italic(str: string): string;
 
 type formatFunction = (name: string, value: any, prec?: number) => string;
 type setter_function_t = (_: any) => void;
@@ -1050,6 +826,258 @@ type dnd_container_config = dnd_container_positioning_type & {
     custom_region_box?: [Vector2, Vector2];
     sorting_function?: (a: string, b: string) => number;
 };
+
+interface ContentElement {
+    id: string;
+    appendTo(container: HTMLDivElement): void;
+    toJSON(): object;
+}
+declare class Content {
+    private elements;
+    private elementMap;
+    private nextId;
+    private contentDiv;
+    constructor(contentDiv: HTMLDivElement);
+    private generateId;
+    private addElement;
+    addHeader(text: string, level?: number): string;
+    addParagraph(text: string): string;
+    addDrawing(width?: number, height?: number): {
+        draw: (...diagrams: any) => void;
+        int: Interactive;
+    };
+    addSvg(width?: number, height?: number): string;
+    getElement(id: string): ContentElement | undefined;
+    getDomElement(id: string): Element | null;
+    getDrawingElement(drawingId: string): SVGSVGElement | null;
+    removeElement(id: string): boolean;
+    toJSON(): object;
+    static fromJSON(json: any, div: HTMLDivElement): Content;
+}
+
+/**
+ * Helper function to convert from degrees to radians
+ */
+declare function to_radian(angle: number): number;
+/**
+ * Helper function to convert from radians to degrees
+ */
+declare function to_degree(angle: number): number;
+declare function array_repeat<T>(arr: T[], len: number): T[];
+/**
+ * Create a equivalently spaced array of numbers from start to end (inclusive)
+ * [start, end]
+ * @param start start value
+ * @param end end value
+ * @param n number of points
+ */
+declare function linspace(start: number, end: number, n?: number): number[];
+/**
+ * Create a equivalently spaced array of numbers from start to end (exclusice)
+ * [start, end)
+ * @param start start value
+ * @param end end value
+ * @param n number of points
+ */
+declare function linspace_exc(start: number, end: number, n?: number): number[];
+/**
+ * Create a equivalently spaced array of numbers from start to end (exclusive)
+ * [start, end)
+ * @param start start value
+ * @param end end value
+ * @param step step size
+ */
+declare function range(start: number, end: number, step?: number): number[];
+/**
+ * Create a equivalently spaced array of numbers from start to end (inc)
+ * [start, end]
+ * @param start start value
+ * @param end end value
+ * @param step step size
+ */
+declare function range_inc(start: number, end: number, step?: number): number[];
+/**
+ * Transpose a 2D array
+ * if the array is not a rectangle, the transposed array will be padded with undefined
+ * @param arr 2D array
+ * @returns transposed 2D array
+ */
+declare function transpose<T>(arr: T[][]): (T | undefined)[][];
+declare function expand_directional_value(padding: number | number[]): [number, number, number, number];
+
+declare const utils_array_repeat: typeof array_repeat;
+declare const utils_expand_directional_value: typeof expand_directional_value;
+declare const utils_linspace: typeof linspace;
+declare const utils_linspace_exc: typeof linspace_exc;
+declare const utils_range: typeof range;
+declare const utils_range_inc: typeof range_inc;
+declare const utils_to_degree: typeof to_degree;
+declare const utils_to_radian: typeof to_radian;
+declare const utils_transpose: typeof transpose;
+declare namespace utils {
+  export { utils_array_repeat as array_repeat, utils_expand_directional_value as expand_directional_value, utils_linspace as linspace, utils_linspace_exc as linspace_exc, utils_range as range, utils_range_inc as range_inc, utils_to_degree as to_degree, utils_to_radian as to_radian, utils_transpose as transpose };
+}
+
+declare const default_diagram_style: DiagramStyle;
+declare const _init_default_diagram_style: DiagramStyle;
+declare const default_text_diagram_style: DiagramStyle;
+declare const _init_default_text_diagram_style: DiagramStyle;
+declare const default_textdata: TextData;
+declare const _init_default_textdata: TextData;
+declare function reset_default_styles(): void;
+/**
+ * Get all svg elements with a specific tag
+ * @param svgelement the svg element to search
+ * @param tag the tag to search
+ * @returns a list of svg elements with the tag
+ */
+declare function get_tagged_svg_element(tag: string, svgelement: SVGElement): SVGElement[];
+/**
+ * WARNING: DEPRECATED
+ * use `draw_to_svg_element` instead
+ *
+ * Draw a diagram to an svg element
+ * @param outer_svgelement the outer svg element to draw to
+ * @param diagram the diagram to draw
+ * @param set_html_attribute whether to set the html attribute of the outer_svgelement
+ * @param render_text whether to render text
+ * @param clear_svg whether to clear the svg before drawing
+ */
+declare function draw_to_svg(outer_svgelement: SVGSVGElement, diagram: Diagram, set_html_attribute?: boolean, render_text?: boolean, clear_svg?: boolean): void;
+interface draw_to_svg_options {
+    set_html_attribute?: boolean;
+    render_text?: boolean;
+    clear_svg?: boolean;
+    embed_image?: boolean;
+    background_color?: string;
+    padding?: number | number[];
+    text_scaling_reference_svg?: SVGSVGElement;
+    text_scaling_reference_padding?: number | number[];
+    filter_strings?: string[];
+}
+/**
+ * Draw a diagram to an svg element
+ * @param outer_svgelement the outer svg element to draw to
+ * @param diagram the diagram to draw
+ * @param options the options for drawing
+ * ```typescript
+ * options : {
+ *    set_html_attribute? : boolean (true),
+ *    render_text? : boolean (true),
+ *    clear_svg? : boolean (true),
+ *    embed_image? : boolean (false),
+ *    background_color? : string (undefined),
+ *    padding? : number | number[] (10),
+ *    text_scaling_reference_svg? : SVGSVGElement (undefined),
+ *    text_scaling_reference_padding? : number | number[] (undefined),
+ * }
+ * ````
+ * define `text_scaling_reference_svg` and `text_scaling_reference_padding` to scale text based on another svg element
+ */
+declare function draw_to_svg_element(outer_svgelement: SVGSVGElement, diagram: Diagram, options?: draw_to_svg_options): void;
+type texhandler_config = {
+    display: boolean;
+};
+type texhadler_function = (texstr: string, config: texhandler_config) => string;
+/**
+ * Recursively handle tex in svg
+ * @param svg the svg element to handle
+ * @param texhandler the tex handler function
+ */
+declare function handle_tex_in_svg(svg: SVGElement, texhandler: texhadler_function): void;
+/**
+ * Download the svg as svg file
+ * @param outer_svgelement the outer svg element to download
+ */
+declare function download_svg_as_svg(outer_svgelement: SVGSVGElement): void;
+/**
+ * Download the svg as png file
+ * @param outer_svgelement the outer svg element to download
+ */
+declare function download_svg_as_png(outer_svgelement: SVGSVGElement): void;
+
+/**
+ * Create rectange centered at origin
+ * @param width width of the rectangle
+ * @param height height of the rectangle
+ * @returns a Diagram object
+ */
+declare function rectangle(width: number, height: number): Diagram;
+/**
+ * Create rectange with a given bottom left corner and top right corner
+ * @param bottomleft bottom left corner of the rectangle
+ * @param topright top right corner of the rectangle
+ * @returns a Diagram object
+ */
+declare function rectangle_corner(bottomleft: Vector2, topright: Vector2): Diagram;
+/**
+ * Create square centered at origin
+ * @param side side length of the square
+ * @returns a Diagram object
+ */
+declare function square(side?: number): Diagram;
+/**
+ * Create regular polygon centered at origin with a given radius
+ * @param n number of sides
+ * @param radius radius of the polygon
+ * @returns a Diagram object
+ * \* if you want to create a regular polygon with a given side length, use regular_polygon_side
+ */
+declare function regular_polygon(n: number, radius?: number): Diagram;
+/**
+ * Create regular polygon centered at origin with a given side length
+ * @param n number of sides
+ * @param sidelength side length of the polygon
+ * @returns a Diagram object
+ * \* if you want to create a regular polygon with a given radius, use regular_polygon
+ */
+declare function regular_polygon_side(n: number, sidelength?: number): Diagram;
+/**
+ * Create circle centered at origin
+ * *currently implemented as a regular polygon with 50 sides*
+ * @param radius radius of the circle
+ * @returns a Diagram object
+ */
+declare function circle(radius?: number): Diagram;
+/**
+ * Create an arc centered at origin
+ * @param radius radius of the arc
+ * @param angle angle of the arc
+ * @returns a Diagram object
+ */
+declare function arc(radius?: number, angle?: number): Diagram;
+/**
+ * Create an arrow from origin to a given point
+ * @param v the end point of the arrow
+ * @param headsize size of the arrow head
+ * @returns a Diagram object
+ */
+declare function arrow(v: Vector2, headsize?: number): Diagram;
+/**
+ * Create an arrow from a given point to another given point
+ * @param start the start point of the arrow
+ * @param end the end point of the arrow
+ * @param headsize size of the arrow head
+ * @returns a Diagram object
+ */
+declare function arrow1(start: Vector2, end: Vector2, headsize?: number): Diagram;
+/**
+ * Create a two-sided arrow from a given point to another given point
+ * @param start the start point of the arrow
+ * @param end the end point of the arrow
+ * @param headsize size of the arrow head
+ * @returns a Diagram object
+ */
+declare function arrow2$1(start: Vector2, end: Vector2, headsize?: number): Diagram;
+/**
+ * Create a text object with mathematical italic font
+ * @param str text to be displayed
+ * @returns a Diagram object
+ */
+declare function textvar(str: string): Diagram;
+
+declare function str_latex_to_unicode(str: string): string;
+declare function str_to_mathematical_italic(str: string): string;
 
 type modifierFunction = (d: Diagram) => Diagram;
 /**
@@ -1817,4 +1845,4 @@ declare namespace encoding {
   export { encoding_decode as decode, encoding_encode as encode };
 }
 
-export { Diagram, Interactive, Path, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, type axes_options, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, type draw_to_svg_options, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
+export { Content, Diagram, Interactive, Path, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, type axes_options, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, type draw_to_svg_options, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
