@@ -3,7 +3,10 @@ export {
 } from './diagram.js';
 
 export {
-    Content
+    Content,
+    HeaderElement,
+    ParagraphElement,
+    DrawingElement,
 } from "./content.js"
 
 export { 

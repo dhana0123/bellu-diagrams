@@ -31,54 +31,26 @@ export class Content {
         return id;
     }
 
-    addHeader(text: string, level: number = 1): string {
+    header(text: string, level: number = 1): HeaderElement {
         const header = new HeaderElement(text, level);
-        return this.addElement(header, "header");
+        this.addElement(header, "header");
+        return header; 
     }
 
-    addParagraph(text: string): string {
+    paragraph(text: string): ParagraphElement {
         const paragraph = new ParagraphElement(text);
-        return this.addElement(paragraph, "paragraph");
+        this.addElement(paragraph, "paragraph");
+        return paragraph; 
     }
 
-    addDrawing(width: number = 100, height: number = 100) {
-      const id = this.addSvg(width, height);
-      const svg = this.getDrawingElement(id)!
-      let draw = (...diagrams:any) => {
-          draw_to_svg(svg, diagram_combine(...diagrams));
-      };
-      let int = new Interactive(this.contentDiv, svg);
-      return {draw, int}
+    diagram(width: number = 100, height: number = 100): DrawingElement {
+        const drawing = new DrawingElement(width, height, this.contentDiv);
+        this.addElement(drawing, "drawing");
+        return drawing; 
     }
-
-    addSvg(width: number = 100, height: number = 100): string {
-        const drawing = new DrawingElement(width, height);
-        return this.addElement(drawing, "drawing");
-    }
-
+ 
     getElement(id: string): ContentElement | undefined {
         return this.elementMap.get(id);
-    }
-    
-    getDomElement(id: string): Element | null {
-        const element = this.elementMap.get(id);
-        if (element) {
-            return this.contentDiv.querySelector(`#${id}`);
-        }
-        return null; 
-    }
-
-    getDrawingElement(drawingId: string): SVGSVGElement | null {
-        const element = this.elementMap.get(drawingId);
-    
-        if(!element) {
-           console.error("Svg not found")
-          }
-        
-        if (element instanceof DrawingElement) {
-            return this.contentDiv.querySelector(`#${drawingId}`) as SVGSVGElement;
-        }
-        return null
     }
 
     removeElement(id: string): boolean {
@@ -108,8 +80,8 @@ export class Content {
         };
     }
 
-    static fromJSON(json: any, div: HTMLDivElement): Content {
-        const content = new Content(div);
+    static fromJSON(json: any, contentDiv: HTMLDivElement): Content {
+        const content = new Content(contentDiv);
         content.nextId = json.nextId;
         json.elements.forEach((elementData: any) => {
             let element: ContentElement;
@@ -121,7 +93,7 @@ export class Content {
                     element = ParagraphElement.fromJSON(elementData);
                     break;
                 case 'drawing':
-                    element = DrawingElement.fromJSON(elementData);
+                    element = DrawingElement.fromJSON(elementData, contentDiv);
                     break;
                 default:
                     throw new Error(`Unknown element type: ${elementData.type}`);
@@ -135,35 +107,107 @@ export class Content {
     }
 }
 
-class HeaderElement implements ContentElement {
+export class DrawingElement implements ContentElement {
     id: string = '';
-    constructor(public text: string, public level: number) {}
+    private element;
+    private callbacks: { [event: string]: Function[] } = {};
+
+    constructor(public width: number, public height: number, private contentDiv: HTMLDivElement) {
+        this.contentDiv = contentDiv;
+        this.element =  document.createElementNS("http://www.w3.org/2000/svg", 'svg');
+    }
 
     appendTo(container: HTMLDivElement): void {
-        const header = document.createElement(`h${this.level}`);
-        header.id = this.id;
-        header.textContent = this.text;
-        container.appendChild(header);
+        this.element.setAttribute("id", this.id);
+        this.element.setAttribute("width", `${this.width}px`);
+        this.element.setAttribute("height", `${this.height}px`);
+        this.element.style.margin = "auto";
+
+        // Attach event listeners (if needed)
+        this.attachEventListeners(this.element);
+
+        container.appendChild(this.element);
+    }
+
+    init() {
+      let draw = (...diagrams:any) => {
+          draw_to_svg(this.element, diagram_combine(...diagrams));
+      };
+      let int = new Interactive(this.contentDiv, this.element);
+      return {draw, int}
+    }
+
+    
+    getElement() {
+        return this.element
+    }
+
+    private attachEventListeners(svg: SVGSVGElement): void {
+        svg.addEventListener('click', () => this.emit('click'));
+    }
+
+    emit(eventName: string): void {
+        if (this.callbacks[eventName]) {
+            this.callbacks[eventName].forEach(callback => callback());
+        }
+    }
+
+    on(eventName: string, callback: Function): void {
+        if (!this.callbacks[eventName]) {
+            this.callbacks[eventName] = [];
+        }
+        this.callbacks[eventName].push(callback);
     }
 
     toJSON(): object {
-        return { type: 'header', text: this.text, level: this.level };
+        return { type: 'drawing', width: this.width, height: this.height };
     }
 
-    static fromJSON(json: any): HeaderElement {
-        return new HeaderElement(json.text, json.level);
+    static fromJSON(json: any, contentDiv: HTMLDivElement): DrawingElement {
+        return new DrawingElement(json.width, json.height, contentDiv);
     }
 }
 
-class ParagraphElement implements ContentElement {
+export class ParagraphElement implements ContentElement {
     id: string = '';
-    constructor(public text: string) {}
+    private element;
+    private callbacks: { [event: string]: Function[] } = {};
+
+    constructor(public text: string) {
+        this.element = document.createElement('p');
+    }
+
+
+    private attachEventListeners(paragraph: HTMLParagraphElement): void {
+        paragraph.addEventListener('click', () => this.emit('click'));
+    }
 
     appendTo(container: HTMLDivElement): void {
-        const paragraph = document.createElement('p');
-        paragraph.id = this.id;
-        paragraph.textContent = this.text;
-        container.appendChild(paragraph);
+        
+        this.element.id = this.id;
+        this.element.textContent = this.text;
+
+        // Attach event listeners
+        this.attachEventListeners(this.element);
+
+        container.appendChild(this.element);
+    }
+
+    getElement() {
+        return this.element
+    }
+
+    emit(eventName: string): void {
+        if (this.callbacks[eventName]) {
+            this.callbacks[eventName].forEach(callback => callback());
+        }
+    }
+
+    on(eventName: string, callback: Function): void {
+        if (!this.callbacks[eventName]) {
+            this.callbacks[eventName] = [];
+        }
+        this.callbacks[eventName].push(callback);
     }
 
     toJSON(): object {
@@ -175,25 +219,55 @@ class ParagraphElement implements ContentElement {
     }
 }
 
-class DrawingElement implements ContentElement {
+
+export class HeaderElement implements ContentElement {
     id: string = '';
-    constructor(public width: number, public height: number) {}
+    private element;
+    private callbacks: { [event: string]: Function[] } = {};
+
+    constructor(public text: string, public level: number) {
+        this.element = document.createElement(`h${this.level}`);
+    }
 
     appendTo(container: HTMLDivElement): void {
-        const svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
-        svg.classList.add("drawing")
-        svg.setAttribute("id", this.id);
-        svg.setAttribute("width", `${this.width}px`);
-        svg.setAttribute("height", `${this.height}px`);
-        svg.style.margin = "auto"
-        container.appendChild(svg);
+        this.element.id = this.id;
+        this.element.textContent = this.text;
+
+        // Attach event listeners
+        this.attachEventListeners(this.element);
+
+        container.appendChild(this.element);
+    }
+
+    
+    getElement() {
+        return this.element
+    }
+
+    private attachEventListeners(header: HTMLElement): void {
+        header.addEventListener('click', () => this.emit('click'));
+    }
+
+    emit(eventName: string): void {
+        if (this.callbacks[eventName]) {
+            this.callbacks[eventName].forEach(callback => callback());
+        }
+    }
+
+    on(eventName: string, callback: Function): void {
+        if (!this.callbacks[eventName]) {
+            this.callbacks[eventName] = [];
+        }
+        this.callbacks[eventName].push(callback);
     }
 
     toJSON(): object {
-        return { type: 'drawing', width: this.width, height: this.height };
+        return { type: 'header', text: this.text, level: this.level };
     }
 
-    static fromJSON(json: any): DrawingElement {
-        return new DrawingElement(json.width, json.height);
+    static fromJSON(json: any): HeaderElement {
+        return new HeaderElement(json.text, json.level);
     }
 }
+
+

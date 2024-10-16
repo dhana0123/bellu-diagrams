@@ -5482,46 +5482,23 @@ class Content {
         element.appendTo(this.contentDiv); // Append directly here
         return id;
     }
-    addHeader(text, level = 1) {
+    header(text, level = 1) {
         const header = new HeaderElement(text, level);
-        return this.addElement(header, "header");
+        this.addElement(header, "header");
+        return header;
     }
-    addParagraph(text) {
+    paragraph(text) {
         const paragraph = new ParagraphElement(text);
-        return this.addElement(paragraph, "paragraph");
+        this.addElement(paragraph, "paragraph");
+        return paragraph;
     }
-    addDrawing(width = 100, height = 100) {
-        const id = this.addSvg(width, height);
-        const svg = this.getDrawingElement(id);
-        let draw = (...diagrams) => {
-            draw_to_svg(svg, diagram_combine(...diagrams));
-        };
-        let int = new Interactive(this.contentDiv, svg);
-        return { draw, int };
-    }
-    addSvg(width = 100, height = 100) {
-        const drawing = new DrawingElement(width, height);
-        return this.addElement(drawing, "drawing");
+    diagram(width = 100, height = 100) {
+        const drawing = new DrawingElement(width, height, this.contentDiv);
+        this.addElement(drawing, "drawing");
+        return drawing;
     }
     getElement(id) {
         return this.elementMap.get(id);
-    }
-    getDomElement(id) {
-        const element = this.elementMap.get(id);
-        if (element) {
-            return this.contentDiv.querySelector(`#${id}`);
-        }
-        return null;
-    }
-    getDrawingElement(drawingId) {
-        const element = this.elementMap.get(drawingId);
-        if (!element) {
-            console.error("Svg not found");
-        }
-        if (element instanceof DrawingElement) {
-            return this.contentDiv.querySelector(`#${drawingId}`);
-        }
-        return null;
     }
     removeElement(id) {
         const element = this.elementMap.get(id);
@@ -5545,8 +5522,8 @@ class Content {
             nextId: this.nextId
         };
     }
-    static fromJSON(json, div) {
-        const content = new Content(div);
+    static fromJSON(json, contentDiv) {
+        const content = new Content(contentDiv);
         content.nextId = json.nextId;
         json.elements.forEach((elementData) => {
             let element;
@@ -5558,7 +5535,7 @@ class Content {
                     element = ParagraphElement.fromJSON(elementData);
                     break;
                 case 'drawing':
-                    element = DrawingElement.fromJSON(elementData);
+                    element = DrawingElement.fromJSON(elementData, contentDiv);
                     break;
                 default:
                     throw new Error(`Unknown element type: ${elementData.type}`);
@@ -5571,35 +5548,86 @@ class Content {
         return content;
     }
 }
-class HeaderElement {
-    constructor(text, level) {
-        this.text = text;
-        this.level = level;
+class DrawingElement {
+    constructor(width, height, contentDiv) {
+        this.width = width;
+        this.height = height;
+        this.contentDiv = contentDiv;
         this.id = '';
+        this.callbacks = {};
+        this.contentDiv = contentDiv;
+        this.element = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
     }
     appendTo(container) {
-        const header = document.createElement(`h${this.level}`);
-        header.id = this.id;
-        header.textContent = this.text;
-        container.appendChild(header);
+        this.element.setAttribute("id", this.id);
+        this.element.setAttribute("width", `${this.width}px`);
+        this.element.setAttribute("height", `${this.height}px`);
+        this.element.style.margin = "auto";
+        // Attach event listeners (if needed)
+        this.attachEventListeners(this.element);
+        container.appendChild(this.element);
+    }
+    init() {
+        let draw = (...diagrams) => {
+            draw_to_svg(this.element, diagram_combine(...diagrams));
+        };
+        let int = new Interactive(this.contentDiv, this.element);
+        return { draw, int };
+    }
+    getElement() {
+        return this.element;
+    }
+    attachEventListeners(svg) {
+        svg.addEventListener('click', () => this.emit('click'));
+    }
+    emit(eventName) {
+        if (this.callbacks[eventName]) {
+            this.callbacks[eventName].forEach(callback => callback());
+        }
+    }
+    on(eventName, callback) {
+        if (!this.callbacks[eventName]) {
+            this.callbacks[eventName] = [];
+        }
+        this.callbacks[eventName].push(callback);
     }
     toJSON() {
-        return { type: 'header', text: this.text, level: this.level };
+        return { type: 'drawing', width: this.width, height: this.height };
     }
-    static fromJSON(json) {
-        return new HeaderElement(json.text, json.level);
+    static fromJSON(json, contentDiv) {
+        return new DrawingElement(json.width, json.height, contentDiv);
     }
 }
 class ParagraphElement {
     constructor(text) {
         this.text = text;
         this.id = '';
+        this.callbacks = {};
+        this.element = document.createElement('p');
+    }
+    attachEventListeners(paragraph) {
+        paragraph.addEventListener('click', () => this.emit('click'));
     }
     appendTo(container) {
-        const paragraph = document.createElement('p');
-        paragraph.id = this.id;
-        paragraph.textContent = this.text;
-        container.appendChild(paragraph);
+        this.element.id = this.id;
+        this.element.textContent = this.text;
+        // Attach event listeners
+        this.attachEventListeners(this.element);
+        container.appendChild(this.element);
+    }
+    getElement() {
+        return this.element;
+    }
+    emit(eventName) {
+        if (this.callbacks[eventName]) {
+            this.callbacks[eventName].forEach(callback => callback());
+        }
+    }
+    on(eventName, callback) {
+        if (!this.callbacks[eventName]) {
+            this.callbacks[eventName] = [];
+        }
+        this.callbacks[eventName].push(callback);
     }
     toJSON() {
         return { type: 'paragraph', text: this.text };
@@ -5608,26 +5636,43 @@ class ParagraphElement {
         return new ParagraphElement(json.text);
     }
 }
-class DrawingElement {
-    constructor(width, height) {
-        this.width = width;
-        this.height = height;
+class HeaderElement {
+    constructor(text, level) {
+        this.text = text;
+        this.level = level;
         this.id = '';
+        this.callbacks = {};
+        this.element = document.createElement(`h${this.level}`);
     }
     appendTo(container) {
-        const svg = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
-        svg.classList.add("drawing");
-        svg.setAttribute("id", this.id);
-        svg.setAttribute("width", `${this.width}px`);
-        svg.setAttribute("height", `${this.height}px`);
-        svg.style.margin = "auto";
-        container.appendChild(svg);
+        this.element.id = this.id;
+        this.element.textContent = this.text;
+        // Attach event listeners
+        this.attachEventListeners(this.element);
+        container.appendChild(this.element);
+    }
+    getElement() {
+        return this.element;
+    }
+    attachEventListeners(header) {
+        header.addEventListener('click', () => this.emit('click'));
+    }
+    emit(eventName) {
+        if (this.callbacks[eventName]) {
+            this.callbacks[eventName].forEach(callback => callback());
+        }
+    }
+    on(eventName, callback) {
+        if (!this.callbacks[eventName]) {
+            this.callbacks[eventName] = [];
+        }
+        this.callbacks[eventName].push(callback);
     }
     toJSON() {
-        return { type: 'drawing', width: this.width, height: this.height };
+        return { type: 'header', text: this.text, level: this.level };
     }
     static fromJSON(json) {
-        return new DrawingElement(json.width, json.height);
+        return new HeaderElement(json.text, json.level);
     }
 }
 
@@ -8819,5 +8864,5 @@ var encoding = /*#__PURE__*/Object.freeze({
     encode: encode
 });
 
-export { Content, Diagram, Interactive, Path, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
+export { Content, Diagram, DrawingElement, HeaderElement, Interactive, ParagraphElement, Path, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
 //# sourceMappingURL=diagrams.js.map
