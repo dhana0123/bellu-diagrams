@@ -5480,7 +5480,7 @@ class Content {
         this.elements.push(element);
         this.elementMap.set(id, element);
         element.appendTo(this.contentDiv); // Append directly here
-        return id;
+        return this;
     }
     header(text, level = 1) {
         const header = new HeaderElement(text, level);
@@ -5546,6 +5546,10 @@ class Content {
             element.appendTo(content.contentDiv); // Append during deserialization
         });
         return content;
+    }
+    static CombineELements(parenElement, ...elemeents) {
+        elemeents.forEach(ele => ele.appendTo(parenElement));
+        return parenElement;
     }
 }
 class DrawingElement {
@@ -5673,6 +5677,132 @@ class HeaderElement {
     }
     static fromJSON(json) {
         return new HeaderElement(json.text, json.level);
+    }
+}
+class Quizz {
+    constructor(questionElements, options, isMultipleSelection = false, hint = "") {
+        this.questionElements = [];
+        this.options = [];
+        this.selectedOptions = new Set();
+        this.callbacks = {};
+        this.id = "";
+        this.element = document.createElement("div");
+        this.questionElements = questionElements;
+        this.options = options;
+        this.isMultipleSelection = isMultipleSelection;
+        this.hint = hint;
+        this.initQuizz();
+    }
+    initQuizz() {
+        this.addQuestion(this.questionElements);
+        this.addOptions();
+        this.addHint();
+        this.addSubmitButton();
+    }
+    addQuestion(elements) {
+        let questionElement = document.createElement("div");
+        questionElement.classList.add("quizz_question");
+        questionElement = Content.CombineELements(questionElement, ...elements);
+        this.element.appendChild(questionElement);
+    }
+    addOptions() {
+        const existingOptionsElement = this.element.querySelector(".quizz_options");
+        if (existingOptionsElement) {
+            this.element.removeChild(existingOptionsElement);
+        }
+        let optionsElement = document.createElement("div");
+        optionsElement.classList.add("quizz_options");
+        this.options.forEach((ele, index) => {
+            const optionElement = ele.getElement();
+            optionElement.classList.add(`option`, `option_${index + 1}`);
+            if (this.selectedOptions.has(index + 1)) {
+                optionElement.classList.add('selected');
+            }
+            else {
+                optionElement.classList.remove('selected');
+            }
+            optionElement.addEventListener('click', () => this.onOptionClick(index + 1));
+            ele.appendTo(optionsElement);
+        });
+        this.element.appendChild(optionsElement);
+    }
+    onOptionClick(clickedIndex) {
+        if (this.isMultipleSelection) {
+            if (this.selectedOptions.has(clickedIndex)) {
+                this.selectedOptions.delete(clickedIndex);
+            }
+            else {
+                this.selectedOptions.add(clickedIndex);
+            }
+        }
+        else {
+            this.selectedOptions.clear();
+            this.selectedOptions.add(clickedIndex);
+        }
+        this.updateOptionSelections();
+        this.emit('selection', Array.from(this.selectedOptions));
+    }
+    updateOptionSelections() {
+        const optionsElement = this.element.querySelector(".quizz_options");
+        if (optionsElement) {
+            this.options.forEach((_, index) => {
+                const optionElement = optionsElement.querySelector(`.option_${index + 1}`);
+                if (optionElement) {
+                    if (this.selectedOptions.has(index + 1)) {
+                        optionElement.classList.add('selected');
+                    }
+                    else {
+                        optionElement.classList.remove('selected');
+                    }
+                }
+            });
+        }
+    }
+    addHint() {
+        if (this.hint) {
+            const hintElement = document.createElement("div");
+            hintElement.classList.add("quizz_hint");
+            hintElement.textContent = `Hint: ${this.hint}`;
+            this.element.appendChild(hintElement);
+        }
+    }
+    addSubmitButton() {
+        const submitButton = document.createElement("button");
+        submitButton.textContent = "Submit";
+        submitButton.classList.add("quizz_submit");
+        submitButton.addEventListener('click', () => this.onSubmit());
+        this.element.appendChild(submitButton);
+    }
+    onSubmit() {
+        const selectedArray = Array.from(this.selectedOptions);
+        this.emit('submit', selectedArray);
+    }
+    emit(eventName, data) {
+        if (this.callbacks[eventName]) {
+            this.callbacks[eventName].forEach(callback => callback(data));
+        }
+    }
+    on(eventName, callback) {
+        if (!this.callbacks[eventName]) {
+            this.callbacks[eventName] = [];
+        }
+        this.callbacks[eventName].push(callback);
+    }
+    getElement() {
+        return this.element;
+    }
+    appendTo(container) {
+        this.element.id = this.id;
+        this.element.classList.add("quizz");
+        container.appendChild(this.element);
+    }
+    toJSON() {
+        return {
+            type: 'quizz',
+            isMultipleSelection: this.isMultipleSelection,
+            hint: this.hint,
+            selectedOptions: Array.from(this.selectedOptions)
+        };
     }
 }
 
@@ -8864,5 +8994,5 @@ var encoding = /*#__PURE__*/Object.freeze({
     encode: encode
 });
 
-export { Content, Diagram, DrawingElement, HeaderElement, Interactive, ParagraphElement, Path, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
+export { Content, Diagram, DrawingElement, HeaderElement, Interactive, ParagraphElement, Path, Quizz, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
 //# sourceMappingURL=diagrams.js.map

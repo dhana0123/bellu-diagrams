@@ -6,6 +6,7 @@ interface ContentElement {
     id: string;
     appendTo(container: HTMLDivElement): void;
     toJSON(): object;
+    getElement(): Element;
 }
 
 export class Content {
@@ -22,13 +23,13 @@ export class Content {
         return `${type}_${this.nextId++}`;
     }
 
-    private addElement(element: ContentElement, type: string): string {
+    addElement(element: ContentElement, type: string) {
         const id = this.generateId(type);
         element.id = id;
         this.elements.push(element);
         this.elementMap.set(id, element);
         element.appendTo(this.contentDiv); // Append directly here
-        return id;
+        return this
     }
 
     header(text: string, level: number = 1): HeaderElement {
@@ -104,6 +105,11 @@ export class Content {
             element.appendTo(content.contentDiv); // Append during deserialization
         });
         return content;
+    }
+
+    static CombineELements(parenElement: HTMLDivElement, ...elemeents: ContentElement[]) {
+        elemeents.forEach(ele => ele.appendTo(parenElement))
+        return parenElement
     }
 }
 
@@ -270,4 +276,145 @@ export class HeaderElement implements ContentElement {
     }
 }
 
+export class Quizz implements ContentElement {
+    private questionElements: ContentElement[] = []
+    private options: ContentElement[] = [];
+    public element: Element;
+    private selectedOptions: Set<number> = new Set();
+    private callbacks: { [event: string]: Function[] } = {};
+    id: string = ""
+    private isMultipleSelection: boolean;
+    private hint: string;
 
+    constructor(questionElements: ContentElement[], options: ContentElement[], isMultipleSelection: boolean = false, hint: string = "") {
+        this.element = document.createElement("div")
+        this.questionElements = questionElements;
+        this.options = options;
+        this.isMultipleSelection = isMultipleSelection;
+        this.hint = hint;
+        this.initQuizz();
+    }
+
+    private initQuizz() {
+        this.addQuestion(this.questionElements);
+        this.addOptions();
+        this.addHint();
+        this.addSubmitButton();
+    }
+
+    private addQuestion(elements: ContentElement[]) {
+        let questionElement = document.createElement("div");
+        questionElement.classList.add("quizz_question");
+        questionElement = Content.CombineELements(questionElement, ...elements);
+        this.element.appendChild(questionElement);
+    }
+
+    private addOptions() {
+        const existingOptionsElement = this.element.querySelector(".quizz_options");
+        if(existingOptionsElement) {
+            this.element.removeChild(existingOptionsElement);
+        }
+
+        let optionsElement = document.createElement("div");
+        optionsElement.classList.add("quizz_options");
+        
+        this.options.forEach((ele, index) => {
+            const optionElement = ele.getElement();
+            optionElement.classList.add(`option`, `option_${index+1}`);
+            if(this.selectedOptions.has(index + 1)) {
+                optionElement.classList.add('selected');
+            } else {
+                optionElement.classList.remove('selected');
+            }
+            optionElement.addEventListener('click', () => this.onOptionClick(index + 1));
+            ele.appendTo(optionsElement);
+        });
+        
+        this.element.appendChild(optionsElement);
+    }
+
+    private onOptionClick(clickedIndex: number) {
+        if (this.isMultipleSelection) {
+            if (this.selectedOptions.has(clickedIndex)) {
+                this.selectedOptions.delete(clickedIndex);
+            } else {
+                this.selectedOptions.add(clickedIndex);
+            }
+        } else {
+            this.selectedOptions.clear();
+            this.selectedOptions.add(clickedIndex);
+        }
+        this.updateOptionSelections();
+        this.emit('selection', Array.from(this.selectedOptions));
+    }
+
+    private updateOptionSelections() {
+        const optionsElement = this.element.querySelector(".quizz_options");
+        if (optionsElement) {
+            this.options.forEach((_, index) => {
+                const optionElement = optionsElement.querySelector(`.option_${index+1}`);
+                if (optionElement) {
+                    if (this.selectedOptions.has(index + 1)) {
+                        optionElement.classList.add('selected');
+                    } else {
+                        optionElement.classList.remove('selected');
+                    }
+                }
+            });
+        }
+    }
+
+    private addHint() {
+        if (this.hint) {
+            const hintElement = document.createElement("div");
+            hintElement.classList.add("quizz_hint");
+            hintElement.textContent = `Hint: ${this.hint}`;
+            this.element.appendChild(hintElement);
+        }
+    }
+
+    private addSubmitButton() {
+        const submitButton = document.createElement("button");
+        submitButton.textContent = "Submit";
+        submitButton.classList.add("quizz_submit");
+        submitButton.addEventListener('click', () => this.onSubmit());
+        this.element.appendChild(submitButton);
+    }
+
+    private onSubmit() {
+        const selectedArray = Array.from(this.selectedOptions);
+        this.emit('submit', selectedArray);
+    }
+
+    emit(eventName: string, data?: any): void {
+        if (this.callbacks[eventName]) {
+            this.callbacks[eventName].forEach(callback => callback(data));
+        }
+    }
+
+    on(eventName: string, callback: Function): void {
+        if (!this.callbacks[eventName]) {
+            this.callbacks[eventName] = [];
+        }
+        this.callbacks[eventName].push(callback);
+    }
+
+    getElement(): Element {
+       return this.element;
+    }
+
+    appendTo(container: HTMLDivElement): void {
+        this.element.id = this.id;
+        this.element.classList.add("quizz");
+        container.appendChild(this.element);
+    }
+
+    toJSON(): object {
+        return { 
+            type: 'quizz',
+            isMultipleSelection: this.isMultipleSelection,
+            hint: this.hint,
+            selectedOptions: Array.from(this.selectedOptions)
+        };
+    }
+}

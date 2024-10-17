@@ -7,6 +7,7 @@ export {
     HeaderElement,
     ParagraphElement,
     DrawingElement,
+    Quizz,
 } from "./content.js"
 
 export { 

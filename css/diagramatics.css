@@ -142,3 +142,9 @@
 :focus > .diagramatics-focusrect {
     visibility: visible;
 }
+
+/* ------------------ quizz ------------------*/
+
+.quizz {
+  background-color: pink;
+}
