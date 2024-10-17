@@ -281,28 +281,37 @@ export class Quizz implements ContentElement {
     private options: ContentElement[] = [];
     public element: Element;
     private selectedOptions: Set<number> = new Set();
+    private explanationElements: ContentElement[] = [];
     private callbacks: { [event: string]: Function[] } = {};
     id: string = ""
     private isMultipleSelection: boolean;
     private hint: string;
+    private isExplanationVisible: boolean = false;
 
-    constructor(questionElements: ContentElement[], options: ContentElement[], isMultipleSelection: boolean = false, hint: string = "") {
+    constructor(
+        questionElements: ContentElement[], 
+        options: ContentElement[], 
+        isMultipleSelection: boolean = false, 
+        hint: string = "",
+        explanationElements: ContentElement[] = []
+    ) {
         this.element = document.createElement("div")
         this.questionElements = questionElements;
         this.options = options;
         this.isMultipleSelection = isMultipleSelection;
         this.hint = hint;
+        this.explanationElements = explanationElements;
         this.initQuizz();
     }
-
     private initQuizz() {
         this.addQuestion(this.questionElements);
         this.addOptions();
         this.addHint();
+        this.addExplanationButton();
         this.addSubmitButton();
     }
 
-    private addQuestion(elements: ContentElement[]) {
+        private addQuestion(elements: ContentElement[]) {
         let questionElement = document.createElement("div");
         questionElement.classList.add("quizz_question");
         questionElement = Content.CombineELements(questionElement, ...elements);
@@ -363,6 +372,37 @@ export class Quizz implements ContentElement {
             });
         }
     }
+
+    private addExplanationButton() {
+        const explanationButton = document.createElement("button");
+        explanationButton.textContent = "Show Explanation";
+        explanationButton.classList.add("quizz_explanation_button");
+        explanationButton.addEventListener('click', () => this.toggleExplanation());
+        this.element.appendChild(explanationButton);
+
+        const explanationContent = document.createElement("div");
+        explanationContent.classList.add("quizz_explanation_content");
+        explanationContent.style.display = "none";
+        this.explanationElements.forEach(element => element.appendTo(explanationContent));
+        this.element.appendChild(explanationContent);
+    }
+
+    private toggleExplanation() {
+        this.isExplanationVisible = !this.isExplanationVisible;
+        const explanationButton = this.element.querySelector(".quizz_explanation_button") as HTMLButtonElement;
+        const explanationContent = this.element.querySelector(".quizz_explanation_content") as HTMLDivElement;
+
+        if (this.isExplanationVisible) {
+            explanationButton.textContent = "Hide Explanation";
+            explanationContent.style.display = "block";
+        } else {
+            explanationButton.textContent = "Show Explanation";
+            explanationContent.style.display = "none";
+        }
+
+        this.emit('explanationToggle', this.isExplanationVisible);
+    }
+
 
     private addHint() {
         if (this.hint) {

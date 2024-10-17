@@ -5680,23 +5680,27 @@ class HeaderElement {
     }
 }
 class Quizz {
-    constructor(questionElements, options, isMultipleSelection = false, hint = "") {
+    constructor(questionElements, options, isMultipleSelection = false, hint = "", explanationElements = []) {
         this.questionElements = [];
         this.options = [];
         this.selectedOptions = new Set();
+        this.explanationElements = [];
         this.callbacks = {};
         this.id = "";
+        this.isExplanationVisible = false;
         this.element = document.createElement("div");
         this.questionElements = questionElements;
         this.options = options;
         this.isMultipleSelection = isMultipleSelection;
         this.hint = hint;
+        this.explanationElements = explanationElements;
         this.initQuizz();
     }
     initQuizz() {
         this.addQuestion(this.questionElements);
         this.addOptions();
         this.addHint();
+        this.addExplanationButton();
         this.addSubmitButton();
     }
     addQuestion(elements) {
@@ -5757,6 +5761,32 @@ class Quizz {
                 }
             });
         }
+    }
+    addExplanationButton() {
+        const explanationButton = document.createElement("button");
+        explanationButton.textContent = "Show Explanation";
+        explanationButton.classList.add("quizz_explanation_button");
+        explanationButton.addEventListener('click', () => this.toggleExplanation());
+        this.element.appendChild(explanationButton);
+        const explanationContent = document.createElement("div");
+        explanationContent.classList.add("quizz_explanation_content");
+        explanationContent.style.display = "none";
+        this.explanationElements.forEach(element => element.appendTo(explanationContent));
+        this.element.appendChild(explanationContent);
+    }
+    toggleExplanation() {
+        this.isExplanationVisible = !this.isExplanationVisible;
+        const explanationButton = this.element.querySelector(".quizz_explanation_button");
+        const explanationContent = this.element.querySelector(".quizz_explanation_content");
+        if (this.isExplanationVisible) {
+            explanationButton.textContent = "Hide Explanation";
+            explanationContent.style.display = "block";
+        }
+        else {
+            explanationButton.textContent = "Show Explanation";
+            explanationContent.style.display = "none";
+        }
+        this.emit('explanationToggle', this.isExplanationVisible);
     }
     addHint() {
         if (this.hint) {
