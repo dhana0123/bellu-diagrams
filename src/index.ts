@@ -4,9 +4,9 @@ export {
 
 export {
     Content,
-    HeaderElement,
-    ParagraphElement,
-    DrawingElement,
+    Header,
+    Paragraph,
+    Drawing,
     Quizz,
 } from "./content.js"
 
