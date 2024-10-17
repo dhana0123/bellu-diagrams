@@ -21,6 +21,7 @@
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/chai": "^4.3.9",
+    "@types/katex": "^0.16.7",
     "@types/mocha": "^10.0.2",
     "chai": "^4.3.10",
     "mocha": "^10.2.0",
@@ -30,6 +31,8 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@velipso/polybool": "^1.0.0"
+    "@velipso/polybool": "^1.0.0",
+    "katex": "^0.16.11",
+    "marked": "^14.1.3"
   }
 }

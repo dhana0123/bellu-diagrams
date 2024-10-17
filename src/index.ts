@@ -8,6 +8,7 @@ export {
     Paragraph,
     Drawing,
     Quizz,
+    Markup,
 } from "./content.js"
 
 export { 

@@ -1,3 +1,5 @@
+import katex from 'katex';
+import * as marked from 'marked';
 import { diagram_combine } from "./diagram";
 import { draw_to_svg } from "./draw_svg";
 import { Interactive } from "./html_interactivity";
@@ -395,5 +397,80 @@ export class Quizz implements ContentElement {
             ...this.explanationElements
         ];
     }
+
+}
+
+
+export class Markup implements ContentElement {
+    id: string = '';
+    public readonly type: string = "markup";
+    private element: HTMLDivElement;
+    private callbacks: { [event: string]: Function[] } = {};
+
+    constructor(public content: string) {
+        this.element = document.createElement('div');
+    }
+
+
+    appendTo(container: HTMLDivElement): void {
+        this.element.id = this.id;
+        this.element.classList.add('markup-content');
+        
+        // Process the content
+        const processedContent = this.processContent(this.content);
+        this.element.innerHTML = processedContent;
+
+
+        // Attach event listeners
+        this.attachEventListeners(this.element);
+
+        container.appendChild(this.element);
+    }
+
+    getElement(): Element {
+        return this.element;
+    }
+
+    private attachEventListeners(element: HTMLDivElement): void {
+        element.addEventListener('click', () => this.emit('click'));
+    }
+   
+    private processContent(content: string): string {
+        // First, parse the content using Marked for Markdown
+        const parsedMarkdown = marked.parse(content) as string;
+    
+        // Then, process KaTeX expressions in the parsed Markdown
+        const parts = parsedMarkdown.split(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/);
+    
+       const converted = parts
+            .map(part => {
+                if (part.startsWith('$$') && part.endsWith('$$')) {
+                    // KaTeX block rendering
+                    return katex.renderToString(part.slice(2, -2), { displayMode: true, output: "mathml"});
+                } else if (part.startsWith('$') && part.endsWith('$')) {
+                    // KaTeX inline rendering
+                    return katex.renderToString(part.slice(1, -1), { displayMode: false, output: "mathml" });
+                } else {
+                    // Return normal Markdown (already parsed)
+                    return part;
+                }
+            })
+            .join('');
+        return converted
+    }
+
+    emit(eventName: string): void {
+        if (this.callbacks[eventName]) {
+            this.callbacks[eventName].forEach(callback => callback());
+        }
+    }
+
+    on(eventName: string, callback: Function): void {
+        if (!this.callbacks[eventName]) {
+            this.callbacks[eventName] = [];
+        }
+        this.callbacks[eventName].push(callback);
+    }
+
 
 }
