@@ -145,6 +145,7 @@ export class Paragraph implements ContentElement {
 
     appendTo(container: HTMLDivElement): void {
         this.element.id = this.id;
+        this.element.classList.add("paragraph")
         this.element.textContent = this.text;
 
         // Attach event listeners
@@ -219,7 +220,7 @@ export class Banner implements ContentElement {
     public readonly type: string = "banner"
     private element: HTMLDivElement;
 
-    constructor(public title: string, public url: string, public width: number, public height?: number) {
+    constructor(public title: string, public url: string, public color: string, public width: number, public height?: number,) {
         this.element = document.createElement("div");
         this.element.classList.add("banner")
         this.element.id = this.id;
@@ -228,6 +229,7 @@ export class Banner implements ContentElement {
     appendTo(container: HTMLDivElement): void {
         const bannerContainer = document.createElement("div")
         bannerContainer.classList.add("banner_container")
+        bannerContainer.style.background = `linear-gradient(to bottom, ${this.color}ff, ${this.color}00)`
         const image = document.createElement("img")
         image.classList.add("banner_image")
         image.src = this.url;
@@ -272,7 +274,8 @@ export class Quiz implements ContentElement {
         hint: string = "",
         explanationElements: ContentElement[] = []
     ) {
-        this.element = document.createElement("div");
+
+        this.element = document.createElement('div')
         this.questionElements = questionElements;
         this.options = options;
         this.isMultipleSelection = isMultipleSelection;
@@ -290,19 +293,19 @@ export class Quiz implements ContentElement {
 
     private addQuestion(elements: ContentElement[]) {
         let questionElement = document.createElement("div");
-        questionElement.classList.add("quizz_question");
+        questionElement.classList.add("quiz_question");
         questionElement = Content.CombineELements(questionElement, ...elements);
         this.element.appendChild(questionElement);
     }
 
     private addOptions() {
-        const existingOptionsElement = this.element.querySelector(".quizz_options");
+        const existingOptionsElement = this.element.querySelector(".quiz_options");
         if (existingOptionsElement) {
             this.element.removeChild(existingOptionsElement);
         }
 
         let optionsElement = document.createElement("div");
-        optionsElement.classList.add("quizz_options");
+        optionsElement.classList.add("quiz_options");
 
         this.options.forEach((ele, index) => {
             const optionElement = ele.getElement();
@@ -337,7 +340,7 @@ export class Quiz implements ContentElement {
     }
 
     private updateOptionSelections() {
-        const optionsElement = this.element.querySelector(".quizz_options");
+        const optionsElement = this.element.querySelector(".quiz_options");
         if (optionsElement) {
             this.options.forEach((_, index) => {
                 const optionElement = optionsElement.querySelector(
@@ -357,12 +360,12 @@ export class Quiz implements ContentElement {
     private addExplanationButton() {
         const explanationButton = document.createElement("button");
         explanationButton.textContent = "Show Explanation";
-        explanationButton.classList.add("quizz_explanation_button");
+        explanationButton.classList.add("quiz_explanation_button");
         explanationButton.addEventListener("click", () => this.toggleExplanation());
         this.element.appendChild(explanationButton);
 
         const explanationContent = document.createElement("div");
-        explanationContent.classList.add("quizz_explanation_content");
+        explanationContent.classList.add("quiz_explanation_content");
         explanationContent.style.display = "none";
         this.explanationElements.forEach((element) =>
             element.appendTo(explanationContent)
@@ -373,10 +376,10 @@ export class Quiz implements ContentElement {
     private toggleExplanation() {
         this.isExplanationVisible = !this.isExplanationVisible;
         const explanationButton = this.element.querySelector(
-            ".quizz_explanation_button"
+            ".quiz_explanation_button"
         ) as HTMLButtonElement;
         const explanationContent = this.element.querySelector(
-            ".quizz_explanation_content"
+            ".quiz_explanation_content"
         ) as HTMLDivElement;
 
         if (this.isExplanationVisible) {
@@ -393,7 +396,7 @@ export class Quiz implements ContentElement {
     private addHint() {
         if (this.hint) {
             const hintElement = document.createElement("div");
-            hintElement.classList.add("quizz_hint");
+            hintElement.classList.add("quiz_hint");
             hintElement.textContent = `Hint: ${this.hint}`;
             this.element.appendChild(hintElement);
         }
@@ -402,7 +405,7 @@ export class Quiz implements ContentElement {
     private addSubmitButton() {
         const submitButton = document.createElement("button");
         submitButton.textContent = "Submit";
-        submitButton.classList.add("quizz_submit");
+        submitButton.classList.add("quiz_submit");
         submitButton.addEventListener("click", () => this.onSubmit());
         this.element.appendChild(submitButton);
     }
@@ -430,9 +433,12 @@ export class Quiz implements ContentElement {
     }
 
     appendTo(container: HTMLDivElement): void {
+        const quiz = document.createElement("div")
+        quiz.classList.add("quiz")
+        this.element.classList.add("quiz_container")
+        quiz.appendChild(this.element)
         this.element.id = this.id;
-        this.element.classList.add("quizz");
-        container.appendChild(this.element);
+        container.appendChild(quiz);
     }
 
     getSubElements(): ContentElement[] {

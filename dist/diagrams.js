@@ -24719,6 +24719,7 @@ class Interactive {
         containerDiv.classList.add("diagramatics-label-container");
         containerDiv.style.display = 'flex';
         containerDiv.style.alignItems = 'center';
+        containerDiv.style.justifyContent = 'center';
         containerDiv.style.gap = '8px';
         let markDiv = document.createElement('div');
         markDiv.classList.add("diagramatics-label-mark");
@@ -24730,6 +24731,7 @@ class Interactive {
         }
         let labeldiv = document.createElement('div');
         labeldiv.classList.add("diagramatics-label");
+        labeldiv.style.textAlign = "center";
         labeldiv.innerHTML = display_format_func(variable_name, value, this.display_precision);
         labeldiv.style.color = color;
         containerDiv.appendChild(markDiv);
@@ -26525,6 +26527,7 @@ class Paragraph {
     }
     appendTo(container) {
         this.element.id = this.id;
+        this.element.classList.add("paragraph");
         this.element.textContent = this.text;
         // Attach event listeners
         this.attachEventListeners(this.element);
@@ -26580,9 +26583,10 @@ class Header {
     }
 }
 class Banner {
-    constructor(title, url, width, height) {
+    constructor(title, url, color, width, height) {
         this.title = title;
         this.url = url;
+        this.color = color;
         this.width = width;
         this.height = height;
         this.id = "";
@@ -26594,6 +26598,7 @@ class Banner {
     appendTo(container) {
         const bannerContainer = document.createElement("div");
         bannerContainer.classList.add("banner_container");
+        bannerContainer.style.background = `linear-gradient(to bottom, ${this.color}ff, ${this.color}00)`;
         const image = document.createElement("img");
         image.classList.add("banner_image");
         image.src = this.url;
@@ -26623,7 +26628,7 @@ class Quiz {
         this.explanationElements = [];
         this.callbacks = {};
         this.isExplanationVisible = false;
-        this.element = document.createElement("div");
+        this.element = document.createElement('div');
         this.questionElements = questionElements;
         this.options = options;
         this.isMultipleSelection = isMultipleSelection;
@@ -26640,17 +26645,17 @@ class Quiz {
     }
     addQuestion(elements) {
         let questionElement = document.createElement("div");
-        questionElement.classList.add("quizz_question");
+        questionElement.classList.add("quiz_question");
         questionElement = Content.CombineELements(questionElement, ...elements);
         this.element.appendChild(questionElement);
     }
     addOptions() {
-        const existingOptionsElement = this.element.querySelector(".quizz_options");
+        const existingOptionsElement = this.element.querySelector(".quiz_options");
         if (existingOptionsElement) {
             this.element.removeChild(existingOptionsElement);
         }
         let optionsElement = document.createElement("div");
-        optionsElement.classList.add("quizz_options");
+        optionsElement.classList.add("quiz_options");
         this.options.forEach((ele, index) => {
             const optionElement = ele.getElement();
             optionElement.classList.add(`option`, `option_${index + 1}`);
@@ -26682,7 +26687,7 @@ class Quiz {
         this.emit("selection", Array.from(this.selectedOptions));
     }
     updateOptionSelections() {
-        const optionsElement = this.element.querySelector(".quizz_options");
+        const optionsElement = this.element.querySelector(".quiz_options");
         if (optionsElement) {
             this.options.forEach((_, index) => {
                 const optionElement = optionsElement.querySelector(`.option_${index + 1}`);
@@ -26700,19 +26705,19 @@ class Quiz {
     addExplanationButton() {
         const explanationButton = document.createElement("button");
         explanationButton.textContent = "Show Explanation";
-        explanationButton.classList.add("quizz_explanation_button");
+        explanationButton.classList.add("quiz_explanation_button");
         explanationButton.addEventListener("click", () => this.toggleExplanation());
         this.element.appendChild(explanationButton);
         const explanationContent = document.createElement("div");
-        explanationContent.classList.add("quizz_explanation_content");
+        explanationContent.classList.add("quiz_explanation_content");
         explanationContent.style.display = "none";
         this.explanationElements.forEach((element) => element.appendTo(explanationContent));
         this.element.appendChild(explanationContent);
     }
     toggleExplanation() {
         this.isExplanationVisible = !this.isExplanationVisible;
-        const explanationButton = this.element.querySelector(".quizz_explanation_button");
-        const explanationContent = this.element.querySelector(".quizz_explanation_content");
+        const explanationButton = this.element.querySelector(".quiz_explanation_button");
+        const explanationContent = this.element.querySelector(".quiz_explanation_content");
         if (this.isExplanationVisible) {
             explanationButton.textContent = "Hide Explanation";
             explanationContent.style.display = "block";
@@ -26726,7 +26731,7 @@ class Quiz {
     addHint() {
         if (this.hint) {
             const hintElement = document.createElement("div");
-            hintElement.classList.add("quizz_hint");
+            hintElement.classList.add("quiz_hint");
             hintElement.textContent = `Hint: ${this.hint}`;
             this.element.appendChild(hintElement);
         }
@@ -26734,7 +26739,7 @@ class Quiz {
     addSubmitButton() {
         const submitButton = document.createElement("button");
         submitButton.textContent = "Submit";
-        submitButton.classList.add("quizz_submit");
+        submitButton.classList.add("quiz_submit");
         submitButton.addEventListener("click", () => this.onSubmit());
         this.element.appendChild(submitButton);
     }
@@ -26757,9 +26762,12 @@ class Quiz {
         return this.element;
     }
     appendTo(container) {
+        const quiz = document.createElement("div");
+        quiz.classList.add("quiz");
+        this.element.classList.add("quiz_container");
+        quiz.appendChild(this.element);
         this.element.id = this.id;
-        this.element.classList.add("quizz");
-        container.appendChild(this.element);
+        container.appendChild(quiz);
     }
     getSubElements() {
         return [

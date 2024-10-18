@@ -901,12 +901,13 @@ declare class Header implements ContentElement {
 declare class Banner implements ContentElement {
     title: string;
     url: string;
+    color: string;
     width: number;
     height?: number | undefined;
     id: string;
     readonly type: string;
     private element;
-    constructor(title: string, url: string, width: number, height?: number | undefined);
+    constructor(title: string, url: string, color: string, width: number, height?: number | undefined);
     appendTo(container: HTMLDivElement): void;
     getElement(): HTMLDivElement;
 }
