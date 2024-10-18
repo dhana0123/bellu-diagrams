@@ -1,4 +1,4 @@
-export { 
+export {
     Diagram, Path, polygon, line, curve, empty, text, image, multiline, multiline_bb, diagram_combine,
 } from './diagram.js';
 
@@ -7,12 +7,14 @@ export {
     Header,
     Paragraph,
     Drawing,
-    Quizz,
+    Quiz,
+    InputQuiz,
     Markup,
+    Banner
 } from "./content.js"
 
-export { 
-    Vector2, V2, Vdir, 
+export {
+    Vector2, V2, Vdir,
 } from './vector.js';
 
 export {
@@ -24,7 +26,7 @@ export {
 export * as utils from './utils.js'
 
 export {
-    draw_to_svg, download_svg_as_svg, download_svg_as_png, 
+    draw_to_svg, download_svg_as_svg, download_svg_as_png,
     draw_to_svg_element, draw_to_svg_options,
     get_tagged_svg_element,
     handle_tex_in_svg,
@@ -33,16 +35,16 @@ export {
     reset_default_styles,
 } from './draw_svg.js';
 
-export { 
+export {
     rectangle, square, regular_polygon, regular_polygon_side,
-    circle, arc, 
+    circle, arc,
     arrow, arrow1, arrow2, textvar, rectangle_corner,
 } from './shapes.js'
 
 export {
     align_vertical, align_horizontal,
     distribute_horizontal, distribute_vertical,
-    distribute_horizontal_and_align, distribute_vertical_and_align, 
+    distribute_horizontal_and_align, distribute_vertical_and_align,
     distribute_grid_row, distribute_variable_row,
 } from './alignment.js'
 
@@ -61,7 +63,7 @@ export * as boolean from './boolean.js'
 export * as filter from './filter.js'
 
 // Extra Shapes
-export { 
+export {
     axes_transform, ax, axes_empty, axes_corner_empty,
     xtickmark_empty, xtickmark, xticks,
     ytickmark_empty, ytickmark, yticks,

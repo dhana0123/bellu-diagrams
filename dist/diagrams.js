@@ -26432,9 +26432,7 @@ class Content {
     generateId(type) {
         return `${type}_${this.nextId++}`;
     }
-    addElement(element, type) {
-        const id = this.generateId(type);
-        element.id = id;
+    add(element) {
         this.addElementRecursively(element);
         element.appendTo(this.contentDiv);
         return this;
@@ -26446,7 +26444,7 @@ class Content {
         this.elementMap.set(element.id, element);
         this.elements.push(element);
         if (element.getSubElements) {
-            element.getSubElements().forEach(subElement => {
+            element.getSubElements().forEach((subElement) => {
                 this.addElementRecursively(subElement);
             });
         }
@@ -26458,7 +26456,7 @@ class Content {
         return this.elementMap.get(id);
     }
     static CombineELements(parenElement, ...elemeents) {
-        elemeents.forEach(ele => ele.appendTo(parenElement));
+        elemeents.forEach((ele) => ele.appendTo(parenElement));
         return parenElement;
     }
 }
@@ -26466,11 +26464,11 @@ class Drawing {
     constructor(width, height) {
         this.width = width;
         this.height = height;
-        this.id = '';
+        this.id = "";
         this.type = "drawing";
         this.drawingContainer = null;
         this.callbacks = {};
-        this.element = document.createElementNS("http://www.w3.org/2000/svg", 'svg');
+        this.element = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     }
     appendTo(container) {
         this.element.setAttribute("id", this.id);
@@ -26478,7 +26476,7 @@ class Drawing {
         this.element.setAttribute("height", `${this.height}px`);
         this.element.style.margin = "auto";
         const drawingContainer = document.createElement("div");
-        drawingContainer.classList.add('diagram_container');
+        drawingContainer.classList.add("diagram_container");
         drawingContainer.appendChild(this.element);
         // Attach event listeners (if needed)
         this.attachEventListeners(this.element);
@@ -26500,11 +26498,11 @@ class Drawing {
         return this.element;
     }
     attachEventListeners(svg) {
-        svg.addEventListener('click', () => this.emit('click'));
+        svg.addEventListener("click", () => this.emit("click"));
     }
     emit(eventName) {
         if (this.callbacks[eventName]) {
-            this.callbacks[eventName].forEach(callback => callback());
+            this.callbacks[eventName].forEach((callback) => callback());
         }
     }
     on(eventName, callback) {
@@ -26517,13 +26515,13 @@ class Drawing {
 class Paragraph {
     constructor(text) {
         this.text = text;
-        this.id = '';
+        this.id = "";
         this.type = "paragraph";
         this.callbacks = {};
-        this.element = document.createElement('p');
+        this.element = document.createElement("p");
     }
     attachEventListeners(paragraph) {
-        paragraph.addEventListener('click', () => this.emit('click'));
+        paragraph.addEventListener("click", () => this.emit("click"));
     }
     appendTo(container) {
         this.element.id = this.id;
@@ -26537,7 +26535,7 @@ class Paragraph {
     }
     emit(eventName) {
         if (this.callbacks[eventName]) {
-            this.callbacks[eventName].forEach(callback => callback());
+            this.callbacks[eventName].forEach((callback) => callback());
         }
     }
     on(eventName, callback) {
@@ -26551,7 +26549,7 @@ class Header {
     constructor(text, level) {
         this.text = text;
         this.level = level;
-        this.id = '';
+        this.id = "";
         this.type = "header";
         this.callbacks = {};
         this.element = document.createElement(`h${this.level}`);
@@ -26567,11 +26565,11 @@ class Header {
         return this.element;
     }
     attachEventListeners(header) {
-        header.addEventListener('click', () => this.emit('click'));
+        header.addEventListener("click", () => this.emit("click"));
     }
     emit(eventName) {
         if (this.callbacks[eventName]) {
-            this.callbacks[eventName].forEach(callback => callback());
+            this.callbacks[eventName].forEach((callback) => callback());
         }
     }
     on(eventName, callback) {
@@ -26581,10 +26579,44 @@ class Header {
         this.callbacks[eventName].push(callback);
     }
 }
-class Quizz {
+class Banner {
+    constructor(title, url, width, height) {
+        this.title = title;
+        this.url = url;
+        this.width = width;
+        this.height = height;
+        this.id = "";
+        this.type = "banner";
+        this.element = document.createElement("div");
+        this.element.classList.add("banner");
+        this.element.id = this.id;
+    }
+    appendTo(container) {
+        const bannerContainer = document.createElement("div");
+        bannerContainer.classList.add("banner_container");
+        const image = document.createElement("img");
+        image.classList.add("banner_image");
+        image.src = this.url;
+        image.width = this.width;
+        if (this.height) {
+            image.height = this.height;
+        }
+        const title = document.createElement("h1");
+        title.classList.add("banner_title");
+        title.innerText = this.title;
+        bannerContainer.appendChild(image);
+        bannerContainer.appendChild(title);
+        this.element.appendChild(bannerContainer);
+        container.appendChild(this.element);
+    }
+    getElement() {
+        return this.element;
+    }
+}
+class Quiz {
     constructor(questionElements, options, isMultipleSelection = false, hint = "", explanationElements = []) {
         this.id = "";
-        this.type = 'quizz';
+        this.type = "quiz";
         this.questionElements = [];
         this.options = [];
         this.selectedOptions = new Set();
@@ -26623,12 +26655,12 @@ class Quizz {
             const optionElement = ele.getElement();
             optionElement.classList.add(`option`, `option_${index + 1}`);
             if (this.selectedOptions.has(index + 1)) {
-                optionElement.classList.add('selected');
+                optionElement.classList.add("selected");
             }
             else {
-                optionElement.classList.remove('selected');
+                optionElement.classList.remove("selected");
             }
-            optionElement.addEventListener('click', () => this.onOptionClick(index + 1));
+            optionElement.addEventListener("click", () => this.onOptionClick(index + 1));
             ele.appendTo(optionsElement);
         });
         this.element.appendChild(optionsElement);
@@ -26647,7 +26679,7 @@ class Quizz {
             this.selectedOptions.add(clickedIndex);
         }
         this.updateOptionSelections();
-        this.emit('selection', Array.from(this.selectedOptions));
+        this.emit("selection", Array.from(this.selectedOptions));
     }
     updateOptionSelections() {
         const optionsElement = this.element.querySelector(".quizz_options");
@@ -26656,10 +26688,10 @@ class Quizz {
                 const optionElement = optionsElement.querySelector(`.option_${index + 1}`);
                 if (optionElement) {
                     if (this.selectedOptions.has(index + 1)) {
-                        optionElement.classList.add('selected');
+                        optionElement.classList.add("selected");
                     }
                     else {
-                        optionElement.classList.remove('selected');
+                        optionElement.classList.remove("selected");
                     }
                 }
             });
@@ -26669,12 +26701,12 @@ class Quizz {
         const explanationButton = document.createElement("button");
         explanationButton.textContent = "Show Explanation";
         explanationButton.classList.add("quizz_explanation_button");
-        explanationButton.addEventListener('click', () => this.toggleExplanation());
+        explanationButton.addEventListener("click", () => this.toggleExplanation());
         this.element.appendChild(explanationButton);
         const explanationContent = document.createElement("div");
         explanationContent.classList.add("quizz_explanation_content");
         explanationContent.style.display = "none";
-        this.explanationElements.forEach(element => element.appendTo(explanationContent));
+        this.explanationElements.forEach((element) => element.appendTo(explanationContent));
         this.element.appendChild(explanationContent);
     }
     toggleExplanation() {
@@ -26689,7 +26721,7 @@ class Quizz {
             explanationButton.textContent = "Show Explanation";
             explanationContent.style.display = "none";
         }
-        this.emit('explanationToggle', this.isExplanationVisible);
+        this.emit("explanationToggle", this.isExplanationVisible);
     }
     addHint() {
         if (this.hint) {
@@ -26703,16 +26735,16 @@ class Quizz {
         const submitButton = document.createElement("button");
         submitButton.textContent = "Submit";
         submitButton.classList.add("quizz_submit");
-        submitButton.addEventListener('click', () => this.onSubmit());
+        submitButton.addEventListener("click", () => this.onSubmit());
         this.element.appendChild(submitButton);
     }
     onSubmit() {
         const selectedArray = Array.from(this.selectedOptions);
-        this.emit('submit', selectedArray);
+        this.emit("submit", selectedArray);
     }
     emit(eventName, data) {
         if (this.callbacks[eventName]) {
-            this.callbacks[eventName].forEach(callback => callback(data));
+            this.callbacks[eventName].forEach((callback) => callback(data));
         }
     }
     on(eventName, callback) {
@@ -26733,21 +26765,21 @@ class Quizz {
         return [
             ...this.questionElements,
             ...this.options,
-            ...this.explanationElements
+            ...this.explanationElements,
         ];
     }
 }
 class Markup {
     constructor(content) {
         this.content = content;
-        this.id = '';
+        this.id = "";
         this.type = "markup";
         this.callbacks = {};
-        this.element = document.createElement('div');
+        this.element = document.createElement("div");
+        this.element.id = this.id;
+        this.element.classList.add("markup-content");
     }
     appendTo(container) {
-        this.element.id = this.id;
-        this.element.classList.add('markup-content');
         // Process the content
         const processedContent = this.processContent(this.content);
         this.element.innerHTML = processedContent;
@@ -26759,7 +26791,7 @@ class Markup {
         return this.element;
     }
     attachEventListeners(element) {
-        element.addEventListener('click', () => this.emit('click'));
+        element.addEventListener("click", () => this.emit("click"));
     }
     processContent(content) {
         // First, parse the content using Marked for Markdown
@@ -26767,26 +26799,32 @@ class Markup {
         // Then, process KaTeX expressions in the parsed Markdown
         const parts = parsedMarkdown.split(/(\$\$[\s\S]*?\$\$|\$[\s\S]*?\$)/);
         const converted = parts
-            .map(part => {
-            if (part.startsWith('$$') && part.endsWith('$$')) {
+            .map((part) => {
+            if (part.startsWith("$$") && part.endsWith("$$")) {
                 // KaTeX block rendering
-                return katex.renderToString(part.slice(2, -2), { displayMode: true, output: "mathml" });
+                return katex.renderToString(part.slice(2, -2), {
+                    displayMode: true,
+                    output: "mathml",
+                });
             }
-            else if (part.startsWith('$') && part.endsWith('$')) {
+            else if (part.startsWith("$") && part.endsWith("$")) {
                 // KaTeX inline rendering
-                return katex.renderToString(part.slice(1, -1), { displayMode: false, output: "mathml" });
+                return katex.renderToString(part.slice(1, -1), {
+                    displayMode: false,
+                    output: "mathml",
+                });
             }
             else {
                 // Return normal Markdown (already parsed)
                 return part;
             }
         })
-            .join('');
+            .join("");
         return converted;
     }
     emit(eventName) {
         if (this.callbacks[eventName]) {
-            this.callbacks[eventName].forEach(callback => callback());
+            this.callbacks[eventName].forEach((callback) => callback());
         }
     }
     on(eventName, callback) {
@@ -26794,6 +26832,107 @@ class Markup {
             this.callbacks[eventName] = [];
         }
         this.callbacks[eventName].push(callback);
+    }
+}
+class InputQuiz {
+    constructor(questionElements, hint = "", explanationElements = []) {
+        this.id = "";
+        this.type = "input_quiz";
+        this.questionElements = [];
+        this.explanationElements = [];
+        this.callbacks = {};
+        this.isExplanationVisible = false;
+        this.element = document.createElement("div");
+        this.questionElements = questionElements;
+        this.hint = hint;
+        this.explanationElements = explanationElements;
+        this.inputElement = document.createElement("input");
+        this.inputElement.type = "text";
+        this.initQuiz();
+    }
+    initQuiz() {
+        this.addQuestion(this.questionElements);
+        this.addInputField();
+        this.addHint();
+        this.addExplanationButton();
+        this.addSubmitButton();
+    }
+    addQuestion(elements) {
+        let questionElement = document.createElement("div");
+        questionElement.classList.add("input_quiz_question");
+        questionElement = Content.CombineELements(questionElement, ...elements);
+        this.element.appendChild(questionElement);
+    }
+    addInputField() {
+        this.inputElement.classList.add("input_quiz_input");
+        this.element.appendChild(this.inputElement);
+    }
+    addHint() {
+        if (this.hint) {
+            const hintElement = document.createElement("div");
+            hintElement.classList.add("input_quiz_hint");
+            hintElement.textContent = `Hint: ${this.hint}`;
+            this.element.appendChild(hintElement);
+        }
+    }
+    addExplanationButton() {
+        const explanationButton = document.createElement("button");
+        explanationButton.textContent = "Show Explanation";
+        explanationButton.classList.add("input_quiz_explanation_button");
+        explanationButton.addEventListener("click", () => this.toggleExplanation());
+        this.element.appendChild(explanationButton);
+        const explanationContent = document.createElement("div");
+        explanationContent.classList.add("input_quiz_explanation_content");
+        explanationContent.style.display = "none";
+        this.explanationElements.forEach((element) => element.appendTo(explanationContent));
+        this.element.appendChild(explanationContent);
+    }
+    toggleExplanation() {
+        this.isExplanationVisible = !this.isExplanationVisible;
+        const explanationButton = this.element.querySelector(".input_quiz_explanation_button");
+        const explanationContent = this.element.querySelector(".input_quiz_explanation_content");
+        if (this.isExplanationVisible) {
+            explanationButton.textContent = "Hide Explanation";
+            explanationContent.style.display = "block";
+        }
+        else {
+            explanationButton.textContent = "Show Explanation";
+            explanationContent.style.display = "none";
+        }
+        this.emit("explanationToggle", this.isExplanationVisible);
+    }
+    addSubmitButton() {
+        const submitButton = document.createElement("button");
+        submitButton.textContent = "Submit";
+        submitButton.classList.add("input_quiz_submit");
+        submitButton.addEventListener("click", () => this.onSubmit());
+        this.element.appendChild(submitButton);
+    }
+    onSubmit() {
+        const inputValue = this.inputElement.value;
+        this.emit("submit", inputValue);
+    }
+    emit(eventName, data) {
+        if (this.callbacks[eventName]) {
+            this.callbacks[eventName].forEach((callback) => callback(data));
+        }
+    }
+    on(eventName, callback) {
+        if (!this.callbacks[eventName]) {
+            this.callbacks[eventName] = [];
+        }
+        this.callbacks[eventName].push(callback);
+    }
+    getElement() {
+        return this.element;
+    }
+    appendTo(container) {
+        this.element.id = this.id;
+        this.element.classList.add("input_quiz");
+        container.appendChild(this.element);
+    }
+    getSubElements() {
+        return [...this.questionElements, ...this.explanationElements];
     }
 }
 
@@ -29985,5 +30124,5 @@ var encoding = /*#__PURE__*/Object.freeze({
     encode: encode
 });
 
-export { Content, Diagram, Drawing, Header, Interactive, Markup, Paragraph, Path, Quizz, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text$2 as text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
+export { Banner, Content, Diagram, Drawing, Header, InputQuiz, Interactive, Markup, Paragraph, Path, Quiz, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text$2 as text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
 //# sourceMappingURL=diagrams.js.map

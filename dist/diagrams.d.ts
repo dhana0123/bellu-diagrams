@@ -846,7 +846,7 @@ declare class Content {
     private contentDiv;
     constructor(contentDiv: HTMLDivElement);
     private generateId;
-    addElement(element: ContentElement, type: string): this;
+    add(element: ContentElement): this;
     private addElementRecursively;
     getAllElements(): ContentElement[];
     getElement(id: string): ContentElement | undefined;
@@ -898,7 +898,19 @@ declare class Header implements ContentElement {
     emit(eventName: string): void;
     on(eventName: string, callback: Function): void;
 }
-declare class Quizz implements ContentElement {
+declare class Banner implements ContentElement {
+    title: string;
+    url: string;
+    width: number;
+    height?: number | undefined;
+    id: string;
+    readonly type: string;
+    private element;
+    constructor(title: string, url: string, width: number, height?: number | undefined);
+    appendTo(container: HTMLDivElement): void;
+    getElement(): HTMLDivElement;
+}
+declare class Quiz implements ContentElement {
     id: string;
     readonly type: string;
     private questionElements;
@@ -940,6 +952,31 @@ declare class Markup implements ContentElement {
     private processContent;
     emit(eventName: string): void;
     on(eventName: string, callback: Function): void;
+}
+declare class InputQuiz implements ContentElement {
+    id: string;
+    readonly type: string;
+    private questionElements;
+    element: Element;
+    private inputElement;
+    private explanationElements;
+    private callbacks;
+    private hint;
+    private isExplanationVisible;
+    constructor(questionElements: ContentElement[], hint?: string, explanationElements?: ContentElement[]);
+    private initQuiz;
+    private addQuestion;
+    private addInputField;
+    private addHint;
+    private addExplanationButton;
+    private toggleExplanation;
+    private addSubmitButton;
+    private onSubmit;
+    emit(eventName: string, data?: any): void;
+    on(eventName: string, callback: Function): void;
+    getElement(): Element;
+    appendTo(container: HTMLDivElement): void;
+    getSubElements(): ContentElement[];
 }
 
 /**
@@ -1932,4 +1969,4 @@ declare namespace encoding {
   export { encoding_decode as decode, encoding_encode as encode };
 }
 
-export { Content, Diagram, Drawing, Header, Interactive, Markup, Paragraph, Path, Quizz, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, type axes_options, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, type draw_to_svg_options, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
+export { Banner, Content, Diagram, Drawing, Header, InputQuiz, Interactive, Markup, Paragraph, Path, Quiz, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, type axes_options, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, type draw_to_svg_options, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
