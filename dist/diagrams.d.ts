@@ -911,29 +911,47 @@ declare class Banner implements ContentElement {
     appendTo(container: HTMLDivElement): void;
     getElement(): HTMLDivElement;
 }
+interface QuizState {
+    showSubmit: boolean;
+    isExplanationVisible: boolean;
+    isExplanationViewed: boolean;
+    selectedOptions: Set<number>;
+    status: "un-attempt" | "correct" | "wrong";
+    remainingAttempts: number;
+    disabledOptions: Set<number>;
+    answerRevealed: boolean;
+}
 declare class Quiz implements ContentElement {
     id: string;
     readonly type: string;
     private questionElements;
     private options;
     element: Element;
-    private selectedOptions;
     private explanationElements;
     private callbacks;
-    private isMultipleSelection;
-    private hint;
-    private isExplanationVisible;
-    constructor(questionElements: ContentElement[], options: ContentElement[], isMultipleSelection?: boolean, hint?: string, explanationElements?: ContentElement[]);
+    isMultipleSelection: boolean;
+    hint: string;
+    readonly correctOptions: number[];
+    private quiz_footer;
+    state: QuizState;
+    constructor(questionElements: ContentElement[], options: ContentElement[], isMultipleSelection?: boolean, explanationElements?: ContentElement[], hint?: string, correctOptions?: number[]);
+    setState(newState: Partial<QuizState>): void;
+    private updateUI;
     private initQuizz;
     private addQuestion;
     private addOptions;
     private onOptionClick;
-    private updateOptionSelections;
     private addExplanationButton;
+    private addExplanationContent;
     private toggleExplanation;
     private addHint;
     private addSubmitButton;
+    private getQuizzFooter;
     private onSubmit;
+    answerIsRight(): void;
+    answerIsWrong(): void;
+    checkAnswer(showHighlight?: boolean): boolean;
+    private arraysEqual;
     emit(eventName: string, data?: any): void;
     on(eventName: string, callback: Function): void;
     getElement(): Element;

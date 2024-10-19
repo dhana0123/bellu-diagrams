@@ -26619,29 +26619,149 @@ class Banner {
     }
 }
 class Quiz {
-    constructor(questionElements, options, isMultipleSelection = false, hint = "", explanationElements = []) {
+    constructor(questionElements, options, isMultipleSelection = false, explanationElements = [], hint = "", correctOptions = []) {
         this.id = "";
         this.type = "quiz";
         this.questionElements = [];
         this.options = [];
-        this.selectedOptions = new Set();
         this.explanationElements = [];
         this.callbacks = {};
-        this.isExplanationVisible = false;
+        this.correctOptions = [];
+        this.quiz_footer = null;
+        // State management
+        this.state = {
+            showSubmit: true,
+            isExplanationVisible: false,
+            isExplanationViewed: false,
+            selectedOptions: new Set(),
+            status: 'un-attempt',
+            remainingAttempts: 0,
+            disabledOptions: new Set(),
+            answerRevealed: false
+        };
         this.element = document.createElement('div');
         this.questionElements = questionElements;
         this.options = options;
         this.isMultipleSelection = isMultipleSelection;
         this.hint = hint;
         this.explanationElements = explanationElements;
+        this.correctOptions = correctOptions;
         this.initQuizz();
+        this.state = Object.assign(Object.assign({}, this.state), { remainingAttempts: options.length - 1 });
+    }
+    setState(newState) {
+        const oldState = Object.assign({}, this.state);
+        this.state = Object.assign(Object.assign({}, this.state), newState);
+        this.updateUI(oldState);
+    }
+    updateUI(oldState) {
+        // Update submit button text
+        if (oldState.showSubmit !== this.state.showSubmit) {
+            const submitButton = this.element.querySelector(".quiz_submit");
+            if (submitButton) {
+                submitButton.style.display = 'none';
+            }
+        }
+        // Update explanation visibility
+        if (oldState.isExplanationVisible !== this.state.isExplanationVisible) {
+            const explanationButton = this.element.querySelector(".quiz_explanation_button");
+            const explanationContent = this.element.querySelector(".quiz_explanation_content");
+            if (this.state.isExplanationVisible) {
+                explanationButton.textContent = "Hide Explanation";
+                explanationContent.style.display = "block";
+            }
+            else {
+                explanationButton.textContent = "Show Explanation";
+                explanationContent.style.display = "none";
+            }
+        }
+        // Update selected options
+        if (oldState.selectedOptions !== this.state.selectedOptions) {
+            const optionsElement = this.element.querySelector(".quiz_options");
+            if (this.state.answerRevealed)
+                return;
+            if (this.state.status === "correct")
+                return;
+            if (optionsElement) {
+                this.options.forEach((_, index) => {
+                    const optionElement = optionsElement.querySelector(`.option_${index + 1}`);
+                    const optionContainer = optionsElement.querySelector(`.option_container_${index + 1}`);
+                    if (optionContainer && optionElement) {
+                        if (this.state.selectedOptions.has(index + 1)) {
+                            optionElement.classList.add("selected");
+                            optionContainer.classList.add("selected");
+                        }
+                        else {
+                            optionElement.classList.remove("selected");
+                            optionContainer.classList.remove("selected");
+                        }
+                    }
+                });
+            }
+        }
+        // upate on answer revalead
+        if (oldState.answerRevealed !== this.state.answerRevealed) {
+            const optionsElement = this.element.querySelector(".quiz_options");
+            if (optionsElement) {
+                (this.options || []).map((_, index) => {
+                    const optionElement = optionsElement.querySelector(`.option_${index + 1}`);
+                    const optionContainer = optionsElement.querySelector(`.option_container_${index + 1}`);
+                    if (optionContainer && optionElement) {
+                        optionElement.classList.remove("selected");
+                        optionContainer.classList.remove("selected");
+                    }
+                });
+            }
+        }
+        // update the interaction
+        if (oldState.status !== this.state.status) {
+            const quiz = this.element.closest('.quiz');
+            if (quiz) {
+                quiz.setAttribute("data-status", this.state.status);
+            }
+        }
+        // Update disabled options
+        if (oldState.disabledOptions !== this.state.disabledOptions) {
+            const optionsElement = this.element.querySelector(".quiz_options");
+            if (optionsElement) {
+                this.options.forEach((_, index) => {
+                    const optionContainer = optionsElement.querySelector(`.option_container_${index + 1}`);
+                    const radio = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector('input');
+                    const xMark = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector('.x-mark');
+                    if (optionContainer && radio && xMark) {
+                        if (this.state.disabledOptions.has(index + 1)) {
+                            optionContainer.classList.add("disabled");
+                            radio.style.display = "none";
+                            xMark.style.display = "inline-block";
+                            radio.disabled = true;
+                        }
+                    }
+                });
+            }
+        }
+        // Highlight correct answer if no more attempts
+        if (this.state.remainingAttempts === 0 && this.state.status === "wrong") {
+            this.correctOptions.forEach(correctIndex => {
+                const optionContainer = this.element.querySelector(`.option_container_${correctIndex}`);
+                if (optionContainer) {
+                    optionContainer.classList.add("correct-answer");
+                    // Hide X mark for correct answer when revealed
+                    this.setState({ answerRevealed: true });
+                    const xMark = optionContainer.querySelector('.x-mark');
+                    if (xMark) {
+                        xMark.style.display = "none";
+                    }
+                }
+            });
+        }
     }
     initQuizz() {
         this.addQuestion(this.questionElements);
         this.addOptions();
         this.addHint();
-        this.addExplanationButton();
+        this.addExplanationContent();
         this.addSubmitButton();
+        this.addExplanationButton();
     }
     addQuestion(elements) {
         let questionElement = document.createElement("div");
@@ -26657,57 +26777,70 @@ class Quiz {
         let optionsElement = document.createElement("div");
         optionsElement.classList.add("quiz_options");
         this.options.forEach((ele, index) => {
+            const optionContainer = document.createElement("div");
+            optionContainer.classList.add(`option_container`, `option_container_${index + 1}`);
+            const radio = document.createElement("input");
+            radio.type = this.isMultipleSelection ? "checkbox" : "radio";
+            radio.name = `quiz_${this.id}_option`;
+            radio.id = `quiz_${this.id}_option_${index + 1}`;
+            radio.classList.add("option_input");
+            radio.checked = this.state.selectedOptions.has(index + 1);
+            // Create X mark element (initially hidden)
+            const xMark = document.createElement("span");
+            xMark.classList.add("x-mark");
+            xMark.innerHTML = "✕"; // Unicode X symbol
+            xMark.style.display = "none";
+            const label = document.createElement("label");
+            label.htmlFor = radio.id;
+            label.classList.add("option_label");
             const optionElement = ele.getElement();
             optionElement.classList.add(`option`, `option_${index + 1}`);
-            if (this.selectedOptions.has(index + 1)) {
-                optionElement.classList.add("selected");
-            }
-            else {
-                optionElement.classList.remove("selected");
-            }
-            optionElement.addEventListener("click", () => this.onOptionClick(index + 1));
-            ele.appendTo(optionsElement);
+            const handleClick = () => this.onOptionClick(index + 1);
+            radio.addEventListener("change", handleClick);
+            optionContainer.addEventListener("click", (e) => {
+                if (e.target !== radio && !this.state.disabledOptions.has(index + 1)) {
+                    radio.checked = true;
+                    handleClick();
+                }
+            });
+            label.appendChild(radio);
+            label.appendChild(xMark);
+            label.appendChild(optionElement);
+            optionContainer.appendChild(label);
+            ele.appendTo(optionContainer);
+            optionsElement.appendChild(optionContainer);
         });
         this.element.appendChild(optionsElement);
     }
     onOptionClick(clickedIndex) {
+        if (this.state.disabledOptions.has(clickedIndex)) {
+            return;
+        }
+        const newSelectedOptions = new Set(this.state.selectedOptions);
         if (this.isMultipleSelection) {
-            if (this.selectedOptions.has(clickedIndex)) {
-                this.selectedOptions.delete(clickedIndex);
+            if (newSelectedOptions.has(clickedIndex)) {
+                newSelectedOptions.delete(clickedIndex);
             }
             else {
-                this.selectedOptions.add(clickedIndex);
+                newSelectedOptions.add(clickedIndex);
             }
         }
         else {
-            this.selectedOptions.clear();
-            this.selectedOptions.add(clickedIndex);
+            newSelectedOptions.clear();
+            newSelectedOptions.add(clickedIndex);
         }
-        this.updateOptionSelections();
-        this.emit("selection", Array.from(this.selectedOptions));
-    }
-    updateOptionSelections() {
-        const optionsElement = this.element.querySelector(".quiz_options");
-        if (optionsElement) {
-            this.options.forEach((_, index) => {
-                const optionElement = optionsElement.querySelector(`.option_${index + 1}`);
-                if (optionElement) {
-                    if (this.selectedOptions.has(index + 1)) {
-                        optionElement.classList.add("selected");
-                    }
-                    else {
-                        optionElement.classList.remove("selected");
-                    }
-                }
-            });
-        }
+        this.setState({ selectedOptions: newSelectedOptions });
+        this.emit("selection", Array.from(newSelectedOptions));
     }
     addExplanationButton() {
         const explanationButton = document.createElement("button");
         explanationButton.textContent = "Show Explanation";
         explanationButton.classList.add("quiz_explanation_button");
         explanationButton.addEventListener("click", () => this.toggleExplanation());
-        this.element.appendChild(explanationButton);
+        const quiz_footer = this.getQuizzFooter();
+        quiz_footer.appendChild(explanationButton);
+    }
+    addExplanationContent() {
         const explanationContent = document.createElement("div");
         explanationContent.classList.add("quiz_explanation_content");
         explanationContent.style.display = "none";
@@ -26715,18 +26848,12 @@ class Quiz {
         this.element.appendChild(explanationContent);
     }
     toggleExplanation() {
-        this.isExplanationVisible = !this.isExplanationVisible;
-        const explanationButton = this.element.querySelector(".quiz_explanation_button");
-        const explanationContent = this.element.querySelector(".quiz_explanation_content");
-        if (this.isExplanationVisible) {
-            explanationButton.textContent = "Hide Explanation";
-            explanationContent.style.display = "block";
-        }
-        else {
-            explanationButton.textContent = "Show Explanation";
-            explanationContent.style.display = "none";
-        }
-        this.emit("explanationToggle", this.isExplanationVisible);
+        this.setState({
+            isExplanationViewed: true,
+            showSubmit: false,
+            isExplanationVisible: !this.state.isExplanationVisible
+        });
+        this.emit("explanationToggle", this.state.isExplanationVisible);
     }
     addHint() {
         if (this.hint) {
@@ -26738,14 +26865,60 @@ class Quiz {
     }
     addSubmitButton() {
         const submitButton = document.createElement("button");
-        submitButton.textContent = "Submit";
+        submitButton.textContent = "Check";
+        const quiz_footer = this.getQuizzFooter();
         submitButton.classList.add("quiz_submit");
         submitButton.addEventListener("click", () => this.onSubmit());
-        this.element.appendChild(submitButton);
+        quiz_footer.appendChild(submitButton);
+    }
+    getQuizzFooter() {
+        if (!this.quiz_footer) {
+            this.quiz_footer = document.createElement("div");
+            this.quiz_footer.classList.add('quiz_footer');
+            this.element.appendChild(this.quiz_footer);
+        }
+        return this.quiz_footer;
     }
     onSubmit() {
-        const selectedArray = Array.from(this.selectedOptions);
+        const selectedArray = Array.from(this.state.selectedOptions);
         this.emit("submit", selectedArray);
+    }
+    answerIsRight() {
+        this.setState({ status: "correct" });
+        this.emit("correct");
+    }
+    answerIsWrong() {
+        this.setState({ status: 'wrong' });
+        this.emit("wrong");
+    }
+    checkAnswer(showHighlight = true) {
+        const selectedArray = Array.from(this.state.selectedOptions).sort();
+        const correctArray = [...this.correctOptions].sort();
+        const isCorrect = this.arraysEqual(selectedArray, correctArray);
+        if (!isCorrect) {
+            // Disable wrong options
+            selectedArray.forEach(option => {
+                const newDisabledOptions = new Set(this.state.disabledOptions);
+                newDisabledOptions.add(option);
+                this.setState({
+                    disabledOptions: newDisabledOptions,
+                    remainingAttempts: this.state.remainingAttempts - 1
+                });
+            });
+            // If no more attempts, show correct answer
+            if (this.state.remainingAttempts === 0) {
+                this.setState({ showSubmit: false });
+                this.answerIsWrong();
+            }
+        }
+        else {
+            this.answerIsRight();
+        }
+        return isCorrect;
+    }
+    arraysEqual(arr1, arr2) {
+        return arr1.length === arr2.length &&
+            arr1.every((value, index) => value === arr2[index]);
     }
     emit(eventName, data) {
         if (this.callbacks[eventName]) {
@@ -26764,6 +26937,7 @@ class Quiz {
     appendTo(container) {
         const quiz = document.createElement("div");
         quiz.classList.add("quiz");
+        quiz.setAttribute("data-status", this.state.status);
         this.element.classList.add("quiz_container");
         quiz.appendChild(this.element);
         this.element.id = this.id;
