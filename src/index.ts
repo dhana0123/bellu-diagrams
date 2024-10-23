@@ -7,13 +7,15 @@ export {
     Header,
     Paragraph,
     Drawing,
-    InputQuiz,
     Markup,
     Banner,
     Image
 } from "./content.js"
 
-export { Quiz } from "./quizz.js"
+export {
+    InputQuiz,
+    Quiz
+} from "./quizz.js"
 
 export {
     Vector2, V2, Vdir,

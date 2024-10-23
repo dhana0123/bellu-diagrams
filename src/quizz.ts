@@ -52,9 +52,6 @@ export class Quiz implements ContentElement {
         COMPLETED: 'completed'
     } as const;
 
-
-
-
     // State management
     public state: QuizState = {
         showSubmit: true,
@@ -101,8 +98,8 @@ export class Quiz implements ContentElement {
         this.renderHint();
         this.renderExplanation();
         this.renderSubmitButton();
-        this.renderResetButton();
         this.renderExplanationButton();
+        this.renderResetButton();
     }
 
     private set(oldState: QuizState) {
@@ -138,9 +135,6 @@ export class Quiz implements ContentElement {
 
             if (this.state.answerRevealed) return
             if (this.state.status === Quiz.CLASSES.CORRECT || this.state.status === Quiz.CLASSES.COMPLETED) return
-
-            console.log('this update seelcted runed...')
-            console.log(optionsElement)
 
             if (optionsElement) {
                 this.options.forEach((_, index) => {
@@ -306,9 +300,9 @@ export class Quiz implements ContentElement {
 
             if (isCompleted) {
                 if (this.correctOptions.includes(index + 1)) {
-                    optionContainer.classList.add("selected")
+                    optionContainer.classList.add(Quiz.CLASSES.SELECTED)
                 } else {
-                    optionContainer.classList.add("disabled")
+                    optionContainer.classList.add(Quiz.CLASSES.DISABLED)
                 }
             } else {
                 const handleClick = () => this.onOptionClick(index + 1);
@@ -370,7 +364,7 @@ export class Quiz implements ContentElement {
 
     private renderResetButton() {
         const resetButton = document.createElement("button");
-        resetButton.textContent = "Reset";
+        resetButton.textContent = "Start fresh";
         resetButton.classList.add("quiz_reset");
         resetButton.addEventListener("click", () => this.resetQuiz());
 
@@ -533,5 +527,234 @@ export class Quiz implements ContentElement {
             ...this.options,
             ...this.explanationElements,
         ];
+    }
+}
+
+
+type InputState = {
+    questionElements: ContentElement[];
+    inputValue: string;
+    explanationElements: ContentElement[];
+    isExplanationVisible: boolean;
+    showHint: boolean;
+    hint: string;
+}
+
+export class InputQuiz implements ContentElement {
+    id: string = "";
+    public readonly type: string = "input_quiz";
+    private state: {
+        questionElements: ContentElement[];
+        inputValue: string;
+        explanationElements: ContentElement[];
+        isExplanationVisible: boolean;
+        showHint: boolean;
+        hint: string;
+    };
+
+    private static readonly SELECTORS = {
+        ELEMENT: "input_quiz",
+        QUESTION: "input_quiz_question",
+        INPUT: "input_quiz_input",
+        HINT: "input_quiz_hint",
+        EXPLANATION_BUTTON: "input_quiz_explanation_button",
+        EXPLANATION_CONTENT: "input_quiz_explanation_content",
+        SUBMIT_BUTTON: "input_quiz_submit"
+    }
+
+    private subscribers: Map<string, Set<(value: any) => void>> = new Map();
+    public element: Element;
+    private inputElement: HTMLInputElement;
+
+    constructor(
+        public inputType: string,
+        questionElements: ContentElement[],
+        explanationElements: ContentElement[] = []
+    ) {
+        this.element = document.createElement("div");
+        this.state = this.createState({
+            questionElements,
+            inputValue: "",
+            explanationElements,
+            isExplanationVisible: false,
+            showHint: false,
+            hint: ""
+        });
+
+        this.inputElement = document.createElement("input");
+        this.inputElement.type = inputType;
+        this.initQuiz();
+        this.setupQuizClickHandler();
+    }
+
+
+    private setupQuizClickHandler() {
+        this.element.addEventListener('click', (event) => {
+            const target = event.target as HTMLElement;
+
+            // Don't trigger if clicking on or within these elements
+            const isInteractiveElement = target.closest(InputQuiz.SELECTORS.SUBMIT_BUTTON)
+
+            if (!isInteractiveElement) {
+                // this.setState({ showHint: false, hint: "" })
+            }
+        });
+    }
+
+    private createState<T extends object>(initialState: T): T {
+        return new Proxy(initialState, {
+            set: (target: any, property: string, value: any) => {
+                const oldValue = target[property];
+                target[property] = value;
+
+                if (oldValue !== value && this.subscribers.has(property)) {
+                    this.subscribers.get(property)?.forEach(callback => callback(value));
+                }
+                return true;
+            }
+        });
+    }
+
+    subscribe(property: string, callback: (value: any) => void) {
+        if (!this.subscribers.has(property)) {
+            this.subscribers.set(property, new Set());
+        }
+        this.subscribers.get(property)?.add(callback);
+    }
+
+    unsubscribe(property: string, callback: (value: any) => void) {
+        this.subscribers.get(property)?.delete(callback);
+    }
+
+    private initQuiz() {
+        this.renderQuestion(this.state.questionElements);
+        this.renderInputField();
+        this.renderHint();
+        this.renderExplanation();
+        this.renderSubmitButton();
+
+        // Set up reactive subscriptions
+        this.subscribe('inputValue', (value) => this.onInputValueChange(value));
+        this.subscribe('isExplanationVisible', (value) => this.onExplanationVisibilityChange(value));
+        this.subscribe("showHint", (value) => this.onShowHintChange(value))
+        this.subscribe("hint", (value) => this.onHintChange(value))
+    }
+
+    private renderQuestion(elements: ContentElement[]) {
+        let questionElement = document.createElement("div");
+        questionElement.classList.add(InputQuiz.SELECTORS.QUESTION);
+        questionElement = Content.CombineELements(questionElement, ...elements);
+        this.element.appendChild(questionElement);
+    }
+
+    private renderInputField() {
+        this.inputElement.classList.add(InputQuiz.SELECTORS.QUESTION);
+        this.inputElement.addEventListener("input", (e) => {
+            this.state.inputValue = (e.target as HTMLInputElement).value;
+        });
+        this.element.appendChild(this.inputElement);
+    }
+
+    private renderHint() {
+        const hintElement = document.createElement("div");
+        hintElement.classList.add(InputQuiz.SELECTORS.HINT);
+        hintElement.style.display = this.state.showHint ? "block" : "none"
+        this.element.appendChild(hintElement);
+    }
+
+    private renderExplanation() {
+        const explanationButton = document.createElement("button");
+        const explanationContent = document.createElement("div");
+
+        explanationButton.textContent = "Show Explanation";
+        explanationButton.classList.add(InputQuiz.SELECTORS.EXPLANATION_BUTTON);
+        explanationButton.addEventListener("click", () => {
+            this.state.isExplanationVisible = !this.state.isExplanationVisible;
+        });
+
+        explanationContent.classList.add(InputQuiz.SELECTORS.EXPLANATION_CONTENT);
+        explanationContent.style.display = "none";
+        this.state.explanationElements.forEach(element =>
+            element.appendTo(explanationContent)
+        );
+
+        this.element.appendChild(explanationButton);
+        this.element.appendChild(explanationContent);
+    }
+
+    private renderSubmitButton() {
+        const submitButton = document.createElement("button");
+        submitButton.textContent = "Submit";
+        submitButton.classList.add(InputQuiz.SELECTORS.SUBMIT_BUTTON);
+        submitButton.addEventListener("click", () => this.emit("submit", this.state.inputValue));
+        this.element.appendChild(submitButton);
+    }
+
+    private onExplanationVisibilityChange(isVisible: boolean) {
+        const explanationButton = this.element.querySelector(
+            `.${InputQuiz.SELECTORS.EXPLANATION_BUTTON}`
+        ) as HTMLButtonElement;
+        const explanationContent = this.element.querySelector(
+            `.${InputQuiz.SELECTORS.EXPLANATION_CONTENT}`
+        ) as HTMLDivElement;
+
+        explanationButton.textContent = isVisible ? "Hide Explanation" : "Show Explanation";
+        explanationContent.style.display = isVisible ? "block" : "none";
+    }
+
+    private onShowHintChange(showHint: boolean) {
+        console.log('shoHINTTT')
+        const hintElement = this.element.querySelector(`.${InputQuiz.SELECTORS.HINT}`) as HTMLDivElement;
+        if (hintElement && showHint) {
+            hintElement.style.display = showHint ? "block" : "none"
+        }
+    }
+
+    private onHintChange(value: string) {
+        const hintElement = this.element.querySelector(`.${InputQuiz.SELECTORS.HINT}`) as HTMLDivElement;
+        if (hintElement) {
+            hintElement.innerText = value
+        }
+    }
+
+
+    private setState<K extends keyof InputState>(state: Pick<InputState, K>) {
+        Object.keys(state).forEach(key => {
+            this.state[key as K] = state[key as K];
+        });
+    }
+
+    public showHint(text: string) {
+        this.setState({ showHint: true, hint: text })
+    }
+
+
+
+    private onInputValueChange(value: string) {
+        this.emit("onchange", value);
+    }
+
+    emit(eventName: string, data?: any): void {
+        if (this.subscribers.has(eventName)) {
+            this.subscribers.get(eventName)?.forEach(callback => callback(data));
+        }
+    }
+
+    on(eventName: string, callback: Function): void {
+        this.subscribe(eventName, callback as (value: any) => void);
+    }
+
+    getElement(): Element {
+        return this.element;
+    }
+
+    appendTo(container: HTMLDivElement): void {
+        this.element.id = this.id;
+        this.element.classList.add(InputQuiz.SELECTORS.ELEMENT);
+        container.appendChild(this.element);
+    }
+
+    getSubElements(): ContentElement[] {
+        return [...this.state.questionElements, ...this.state.explanationElements];
     }
 }

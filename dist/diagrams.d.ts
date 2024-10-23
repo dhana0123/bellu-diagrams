@@ -925,32 +925,6 @@ declare class Markup implements ContentElement {
     emit(eventName: string): void;
     on(eventName: string, callback: Function): void;
 }
-declare class InputQuiz implements ContentElement {
-    inputType: string;
-    id: string;
-    readonly type: string;
-    private questionElements;
-    element: Element;
-    private inputElement;
-    private explanationElements;
-    private callbacks;
-    private hint;
-    private isExplanationVisible;
-    constructor(inputType: string, questionElements: ContentElement[], hint?: string, explanationElements?: ContentElement[]);
-    private initQuiz;
-    private addQuestion;
-    private addInputField;
-    private addHint;
-    private addExplanationButton;
-    private toggleExplanation;
-    private addSubmitButton;
-    private onSubmit;
-    emit(eventName: string, data?: any): void;
-    on(eventName: string, callback: Function): void;
-    getElement(): Element;
-    appendTo(container: HTMLDivElement): void;
-    getSubElements(): ContentElement[];
-}
 declare class Image implements ContentElement {
     src: string;
     width: number;
@@ -1011,6 +985,38 @@ declare class Quiz implements ContentElement {
     hideHint(): void;
     checkAnswer(): boolean;
     private arraysEqual;
+    emit(eventName: string, data?: any): void;
+    on(eventName: string, callback: Function): void;
+    getElement(): Element;
+    appendTo(container: HTMLDivElement): void;
+    getSubElements(): ContentElement[];
+}
+declare class InputQuiz implements ContentElement {
+    inputType: string;
+    id: string;
+    readonly type: string;
+    private state;
+    private static readonly SELECTORS;
+    private subscribers;
+    element: Element;
+    private inputElement;
+    constructor(inputType: string, questionElements: ContentElement[], explanationElements?: ContentElement[]);
+    private setupQuizClickHandler;
+    private createState;
+    subscribe(property: string, callback: (value: any) => void): void;
+    unsubscribe(property: string, callback: (value: any) => void): void;
+    private initQuiz;
+    private renderQuestion;
+    private renderInputField;
+    private renderHint;
+    private renderExplanation;
+    private renderSubmitButton;
+    private onExplanationVisibilityChange;
+    private onShowHintChange;
+    private onHintChange;
+    private setState;
+    showHint(text: string): void;
+    private onInputValueChange;
     emit(eventName: string, data?: any): void;
     on(eventName: string, callback: Function): void;
     getElement(): Element;

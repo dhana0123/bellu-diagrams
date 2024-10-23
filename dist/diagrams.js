@@ -26683,109 +26683,6 @@ class Markup {
         this.callbacks[eventName].push(callback);
     }
 }
-class InputQuiz {
-    constructor(inputType, questionElements, hint = "", explanationElements = []) {
-        this.inputType = inputType;
-        this.id = "";
-        this.type = "input_quiz";
-        this.questionElements = [];
-        this.explanationElements = [];
-        this.callbacks = {};
-        this.isExplanationVisible = false;
-        this.element = document.createElement("div");
-        this.questionElements = questionElements;
-        this.hint = hint;
-        this.explanationElements = explanationElements;
-        this.inputElement = document.createElement("input");
-        this.inputElement.type = inputType;
-        this.initQuiz();
-    }
-    initQuiz() {
-        this.addQuestion(this.questionElements);
-        this.addInputField();
-        this.addHint();
-        this.addExplanationButton();
-        this.addSubmitButton();
-    }
-    addQuestion(elements) {
-        let questionElement = document.createElement("div");
-        questionElement.classList.add("input_quiz_question");
-        questionElement = Content.CombineELements(questionElement, ...elements);
-        this.element.appendChild(questionElement);
-    }
-    addInputField() {
-        this.inputElement.classList.add("input_quiz_input");
-        this.inputElement.addEventListener("input", (e) => this.emit("onchange", this.inputElement.value));
-        this.element.appendChild(this.inputElement);
-    }
-    addHint() {
-        if (this.hint) {
-            const hintElement = document.createElement("div");
-            hintElement.classList.add("input_quiz_hint");
-            hintElement.textContent = `Hint: ${this.hint}`;
-            this.element.appendChild(hintElement);
-        }
-    }
-    addExplanationButton() {
-        const explanationButton = document.createElement("button");
-        explanationButton.textContent = "Show Explanation";
-        explanationButton.classList.add("input_quiz_explanation_button");
-        explanationButton.addEventListener("click", () => this.toggleExplanation());
-        this.element.appendChild(explanationButton);
-        const explanationContent = document.createElement("div");
-        explanationContent.classList.add("input_quiz_explanation_content");
-        explanationContent.style.display = "none";
-        this.explanationElements.forEach((element) => element.appendTo(explanationContent));
-        this.element.appendChild(explanationContent);
-    }
-    toggleExplanation() {
-        this.isExplanationVisible = !this.isExplanationVisible;
-        const explanationButton = this.element.querySelector(".input_quiz_explanation_button");
-        const explanationContent = this.element.querySelector(".input_quiz_explanation_content");
-        if (this.isExplanationVisible) {
-            explanationButton.textContent = "Hide Explanation";
-            explanationContent.style.display = "block";
-        }
-        else {
-            explanationButton.textContent = "Show Explanation";
-            explanationContent.style.display = "none";
-        }
-        this.emit("explanationToggle", this.isExplanationVisible);
-    }
-    addSubmitButton() {
-        const submitButton = document.createElement("button");
-        submitButton.textContent = "Submit";
-        submitButton.classList.add("input_quiz_submit");
-        submitButton.addEventListener("click", () => this.onSubmit());
-        this.element.appendChild(submitButton);
-    }
-    onSubmit() {
-        const inputValue = this.inputElement.value;
-        this.emit("submit", inputValue);
-    }
-    emit(eventName, data) {
-        if (this.callbacks[eventName]) {
-            this.callbacks[eventName].forEach((callback) => callback(data));
-        }
-    }
-    on(eventName, callback) {
-        if (!this.callbacks[eventName]) {
-            this.callbacks[eventName] = [];
-        }
-        this.callbacks[eventName].push(callback);
-    }
-    getElement() {
-        return this.element;
-    }
-    appendTo(container) {
-        this.element.id = this.id;
-        this.element.classList.add("input_quiz");
-        container.appendChild(this.element);
-    }
-    getSubElements() {
-        return [...this.questionElements, ...this.explanationElements];
-    }
-}
 let Image$1 = class Image {
     constructor(src, width, height) {
         this.src = src;
@@ -26857,8 +26754,8 @@ class Quiz {
         this.renderHint();
         this.renderExplanation();
         this.renderSubmitButton();
-        this.renderResetButton();
         this.renderExplanationButton();
+        this.renderResetButton();
     }
     set(oldState) {
         // Update submit button text
@@ -26888,8 +26785,6 @@ class Quiz {
                 return;
             if (this.state.status === Quiz.CLASSES.CORRECT || this.state.status === Quiz.CLASSES.COMPLETED)
                 return;
-            console.log('this update seelcted runed...');
-            console.log(optionsElement);
             if (optionsElement) {
                 this.options.forEach((_, index) => {
                     const optionElement = optionsElement.querySelector(Quiz.SELECTORS.OPTION(index + 1));
@@ -27027,10 +26922,10 @@ class Quiz {
             optionElement.classList.add(`option`, `option_${index + 1}`);
             if (isCompleted) {
                 if (this.correctOptions.includes(index + 1)) {
-                    optionContainer.classList.add("selected");
+                    optionContainer.classList.add(Quiz.CLASSES.SELECTED);
                 }
                 else {
-                    optionContainer.classList.add("disabled");
+                    optionContainer.classList.add(Quiz.CLASSES.DISABLED);
                 }
             }
             else {
@@ -27083,7 +26978,7 @@ class Quiz {
     }
     renderResetButton() {
         const resetButton = document.createElement("button");
-        resetButton.textContent = "Reset";
+        resetButton.textContent = "Start fresh";
         resetButton.classList.add("quiz_reset");
         resetButton.addEventListener("click", () => this.resetQuiz());
         const quiz_footer = this.getQuizzFooter();
@@ -27242,6 +27137,169 @@ Quiz.CLASSES = {
     ACTIVE: 'active',
     HIDDEN: 'hidden',
     COMPLETED: 'completed'
+};
+class InputQuiz {
+    constructor(inputType, questionElements, explanationElements = []) {
+        this.inputType = inputType;
+        this.id = "";
+        this.type = "input_quiz";
+        this.subscribers = new Map();
+        this.element = document.createElement("div");
+        this.state = this.createState({
+            questionElements,
+            inputValue: "",
+            explanationElements,
+            isExplanationVisible: false,
+            showHint: false,
+            hint: ""
+        });
+        this.inputElement = document.createElement("input");
+        this.inputElement.type = inputType;
+        this.initQuiz();
+        this.setupQuizClickHandler();
+    }
+    setupQuizClickHandler() {
+        this.element.addEventListener('click', (event) => {
+            const target = event.target;
+            // Don't trigger if clicking on or within these elements
+            target.closest(InputQuiz.SELECTORS.SUBMIT_BUTTON);
+        });
+    }
+    createState(initialState) {
+        return new Proxy(initialState, {
+            set: (target, property, value) => {
+                var _a;
+                const oldValue = target[property];
+                target[property] = value;
+                if (oldValue !== value && this.subscribers.has(property)) {
+                    (_a = this.subscribers.get(property)) === null || _a === void 0 ? void 0 : _a.forEach(callback => callback(value));
+                }
+                return true;
+            }
+        });
+    }
+    subscribe(property, callback) {
+        var _a;
+        if (!this.subscribers.has(property)) {
+            this.subscribers.set(property, new Set());
+        }
+        (_a = this.subscribers.get(property)) === null || _a === void 0 ? void 0 : _a.add(callback);
+    }
+    unsubscribe(property, callback) {
+        var _a;
+        (_a = this.subscribers.get(property)) === null || _a === void 0 ? void 0 : _a.delete(callback);
+    }
+    initQuiz() {
+        this.renderQuestion(this.state.questionElements);
+        this.renderInputField();
+        this.renderHint();
+        this.renderExplanation();
+        this.renderSubmitButton();
+        // Set up reactive subscriptions
+        this.subscribe('inputValue', (value) => this.onInputValueChange(value));
+        this.subscribe('isExplanationVisible', (value) => this.onExplanationVisibilityChange(value));
+        this.subscribe("showHint", (value) => this.onShowHintChange(value));
+        this.subscribe("hint", (value) => this.onHintChange(value));
+    }
+    renderQuestion(elements) {
+        let questionElement = document.createElement("div");
+        questionElement.classList.add(InputQuiz.SELECTORS.QUESTION);
+        questionElement = Content.CombineELements(questionElement, ...elements);
+        this.element.appendChild(questionElement);
+    }
+    renderInputField() {
+        this.inputElement.classList.add(InputQuiz.SELECTORS.QUESTION);
+        this.inputElement.addEventListener("input", (e) => {
+            this.state.inputValue = e.target.value;
+        });
+        this.element.appendChild(this.inputElement);
+    }
+    renderHint() {
+        const hintElement = document.createElement("div");
+        hintElement.classList.add(InputQuiz.SELECTORS.HINT);
+        hintElement.style.display = this.state.showHint ? "block" : "none";
+        this.element.appendChild(hintElement);
+    }
+    renderExplanation() {
+        const explanationButton = document.createElement("button");
+        const explanationContent = document.createElement("div");
+        explanationButton.textContent = "Show Explanation";
+        explanationButton.classList.add(InputQuiz.SELECTORS.EXPLANATION_BUTTON);
+        explanationButton.addEventListener("click", () => {
+            this.state.isExplanationVisible = !this.state.isExplanationVisible;
+        });
+        explanationContent.classList.add(InputQuiz.SELECTORS.EXPLANATION_CONTENT);
+        explanationContent.style.display = "none";
+        this.state.explanationElements.forEach(element => element.appendTo(explanationContent));
+        this.element.appendChild(explanationButton);
+        this.element.appendChild(explanationContent);
+    }
+    renderSubmitButton() {
+        const submitButton = document.createElement("button");
+        submitButton.textContent = "Submit";
+        submitButton.classList.add(InputQuiz.SELECTORS.SUBMIT_BUTTON);
+        submitButton.addEventListener("click", () => this.emit("submit", this.state.inputValue));
+        this.element.appendChild(submitButton);
+    }
+    onExplanationVisibilityChange(isVisible) {
+        const explanationButton = this.element.querySelector(`.${InputQuiz.SELECTORS.EXPLANATION_BUTTON}`);
+        const explanationContent = this.element.querySelector(`.${InputQuiz.SELECTORS.EXPLANATION_CONTENT}`);
+        explanationButton.textContent = isVisible ? "Hide Explanation" : "Show Explanation";
+        explanationContent.style.display = isVisible ? "block" : "none";
+    }
+    onShowHintChange(showHint) {
+        console.log('shoHINTTT');
+        const hintElement = this.element.querySelector(`.${InputQuiz.SELECTORS.HINT}`);
+        if (hintElement && showHint) {
+            hintElement.style.display = showHint ? "block" : "none";
+        }
+    }
+    onHintChange(value) {
+        const hintElement = this.element.querySelector(`.${InputQuiz.SELECTORS.HINT}`);
+        if (hintElement) {
+            hintElement.innerText = value;
+        }
+    }
+    setState(state) {
+        Object.keys(state).forEach(key => {
+            this.state[key] = state[key];
+        });
+    }
+    showHint(text) {
+        this.setState({ showHint: true, hint: text });
+    }
+    onInputValueChange(value) {
+        this.emit("onchange", value);
+    }
+    emit(eventName, data) {
+        var _a;
+        if (this.subscribers.has(eventName)) {
+            (_a = this.subscribers.get(eventName)) === null || _a === void 0 ? void 0 : _a.forEach(callback => callback(data));
+        }
+    }
+    on(eventName, callback) {
+        this.subscribe(eventName, callback);
+    }
+    getElement() {
+        return this.element;
+    }
+    appendTo(container) {
+        this.element.id = this.id;
+        this.element.classList.add(InputQuiz.SELECTORS.ELEMENT);
+        container.appendChild(this.element);
+    }
+    getSubElements() {
+        return [...this.state.questionElements, ...this.state.explanationElements];
+    }
+}
+InputQuiz.SELECTORS = {
+    ELEMENT: "input_quiz",
+    QUESTION: "input_quiz_question",
+    INPUT: "input_quiz_input",
+    HINT: "input_quiz_hint",
+    EXPLANATION_BUTTON: "input_quiz_explanation_button",
+    EXPLANATION_CONTENT: "input_quiz_explanation_content",
+    SUBMIT_BUTTON: "input_quiz_submit"
 };
 
 /**
