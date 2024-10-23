@@ -68,6 +68,7 @@ type LinearGradient = {
     }>;
 };
 type TextData = {
+    "color": string;
     "text": string;
     "font-family": string;
     "font-size": string;
@@ -601,7 +602,7 @@ declare class Interactive {
     draw(): void;
     set(variable_name: string, val: any): void;
     get(variable_name: string): any;
-    label(variable_name: string, value: any, color?: string, markType?: 'square' | 'circle', markColor?: string, display_format_func?: formatFunction): void;
+    label(variable_name: string, value: any, display?: boolean, color?: string, markType?: 'square' | 'circle', markColor?: string, display_format_func?: formatFunction): void;
     /**
      * WARNING: deprecated
      * use `locator_initial_draw` instead
@@ -916,10 +917,11 @@ interface QuizState {
     isExplanationVisible: boolean;
     isExplanationViewed: boolean;
     selectedOptions: Set<number>;
-    status: "un-attempt" | "correct" | "wrong";
-    remainingAttempts: number;
+    status: "un-attempt" | "correct" | "wrong" | "completed";
     disabledOptions: Set<number>;
     answerRevealed: boolean;
+    showHint: boolean;
+    hint: string;
 }
 declare class Quiz implements ContentElement {
     id: string;
@@ -930,27 +932,27 @@ declare class Quiz implements ContentElement {
     private explanationElements;
     private callbacks;
     isMultipleSelection: boolean;
-    hint: string;
     readonly correctOptions: number[];
     private quiz_footer;
     state: QuizState;
-    constructor(questionElements: ContentElement[], options: ContentElement[], isMultipleSelection?: boolean, explanationElements?: ContentElement[], hint?: string, correctOptions?: number[]);
+    constructor(status: QuizState['status'], questionElements: ContentElement[], options: ContentElement[], isMultipleSelection?: boolean, explanationElements?: ContentElement[], correctOptions?: number[]);
     setState(newState: Partial<QuizState>): void;
-    private updateUI;
     private initQuizz;
-    private addQuestion;
-    private addOptions;
-    private onOptionClick;
-    private addExplanationButton;
-    private addExplanationContent;
+    private updateUI;
+    private renderQuestions;
+    private renderOptions;
+    private renderExplanationButton;
+    private renderExplanation;
+    private renderHint;
+    private renderSubmitButton;
     private toggleExplanation;
-    private addHint;
-    private addSubmitButton;
+    private setupQuizClickHandler;
+    private onOptionClick;
     private getQuizzFooter;
     private onSubmit;
-    answerIsRight(): void;
-    answerIsWrong(): void;
-    checkAnswer(showHighlight?: boolean): boolean;
+    showHint(hintText: string): void;
+    hideHint(): void;
+    checkAnswer(): boolean;
     private arraysEqual;
     emit(eventName: string, data?: any): void;
     on(eventName: string, callback: Function): void;
@@ -973,6 +975,7 @@ declare class Markup implements ContentElement {
     on(eventName: string, callback: Function): void;
 }
 declare class InputQuiz implements ContentElement {
+    inputType: string;
     id: string;
     readonly type: string;
     private questionElements;
@@ -982,7 +985,7 @@ declare class InputQuiz implements ContentElement {
     private callbacks;
     private hint;
     private isExplanationVisible;
-    constructor(questionElements: ContentElement[], hint?: string, explanationElements?: ContentElement[]);
+    constructor(inputType: string, questionElements: ContentElement[], hint?: string, explanationElements?: ContentElement[]);
     private initQuiz;
     private addQuestion;
     private addInputField;

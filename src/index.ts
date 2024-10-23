@@ -10,7 +10,8 @@ export {
     Quiz,
     InputQuiz,
     Markup,
-    Banner
+    Banner,
+    Image
 } from "./content.js"
 
 export {

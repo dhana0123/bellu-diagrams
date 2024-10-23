@@ -1409,7 +1409,7 @@ function empty(v = V2(0, 0)) {
  */
 function text$2(str) {
     let dtext = new Diagram(DiagramType.Text, {
-        textdata: { text: str, "font-size": DEFAULT_FONTSIZE },
+        textdata: { text: str, "font-size": DEFAULT_FONTSIZE, },
         path: new Path([new Vector2(0, 0)]),
     });
     return dtext;
@@ -24714,10 +24714,10 @@ class Interactive {
     get(variable_name) {
         return this.inp_variables[variable_name];
     }
-    label(variable_name, value, color = 'white', markType = 'square', markColor = '#8B5CF6', display_format_func = defaultFormat_f) {
+    label(variable_name, value, display = true, color = 'white', markType = 'square', markColor = '#8B5CF6', display_format_func = defaultFormat_f) {
         let containerDiv = document.createElement('div');
         containerDiv.classList.add("diagramatics-label-container");
-        containerDiv.style.display = 'flex';
+        containerDiv.style.display = display ? 'flex' : "none";
         containerDiv.style.alignItems = 'center';
         containerDiv.style.justifyContent = 'center';
         containerDiv.style.gap = '8px';
@@ -26619,7 +26619,7 @@ class Banner {
     }
 }
 class Quiz {
-    constructor(questionElements, options, isMultipleSelection = false, explanationElements = [], hint = "", correctOptions = []) {
+    constructor(status, questionElements, options, isMultipleSelection = false, explanationElements = [], correctOptions = []) {
         this.id = "";
         this.type = "quiz";
         this.questionElements = [];
@@ -26633,9 +26633,10 @@ class Quiz {
             showSubmit: true,
             isExplanationVisible: false,
             isExplanationViewed: false,
+            showHint: false,
             selectedOptions: new Set(),
             status: 'un-attempt',
-            remainingAttempts: 0,
+            hint: "",
             disabledOptions: new Set(),
             answerRevealed: false
         };
@@ -26643,16 +26644,24 @@ class Quiz {
         this.questionElements = questionElements;
         this.options = options;
         this.isMultipleSelection = isMultipleSelection;
-        this.hint = hint;
         this.explanationElements = explanationElements;
         this.correctOptions = correctOptions;
+        this.state = Object.assign(Object.assign({}, this.state), { status, showSubmit: status !== "completed" });
         this.initQuizz();
-        this.state = Object.assign(Object.assign({}, this.state), { remainingAttempts: options.length - 1 });
+        this.setupQuizClickHandler();
     }
     setState(newState) {
         const oldState = Object.assign({}, this.state);
         this.state = Object.assign(Object.assign({}, this.state), newState);
         this.updateUI(oldState);
+    }
+    initQuizz() {
+        this.renderQuestions();
+        this.renderOptions();
+        this.renderHint();
+        this.renderExplanation();
+        this.renderSubmitButton();
+        this.renderExplanationButton();
     }
     updateUI(oldState) {
         // Update submit button text
@@ -26680,7 +26689,7 @@ class Quiz {
             const optionsElement = this.element.querySelector(".quiz_options");
             if (this.state.answerRevealed)
                 return;
-            if (this.state.status === "correct")
+            if (this.state.status === "correct" || this.state.status === "completed")
                 return;
             if (optionsElement) {
                 this.options.forEach((_, index) => {
@@ -26740,7 +26749,7 @@ class Quiz {
             }
         }
         // Highlight correct answer if no more attempts
-        if (this.state.remainingAttempts === 0 && this.state.status === "wrong") {
+        if (oldState.status !== this.state.status && this.state.status === "wrong") {
             this.correctOptions.forEach(correctIndex => {
                 const optionContainer = this.element.querySelector(`.option_container_${correctIndex}`);
                 if (optionContainer) {
@@ -26754,28 +26763,33 @@ class Quiz {
                 }
             });
         }
+        //  show thhe hint
+        if (oldState.showHint !== this.state.showHint) {
+            const hintElement = this.element.querySelector(".quiz_hint");
+            if (hintElement && this.state.showHint) {
+                hintElement.innerText = this.state.hint;
+                hintElement.style.display = "block";
+            }
+            else {
+                hintElement.innerHTML = "";
+                hintElement.style.display = "none";
+            }
+        }
     }
-    initQuizz() {
-        this.addQuestion(this.questionElements);
-        this.addOptions();
-        this.addHint();
-        this.addExplanationContent();
-        this.addSubmitButton();
-        this.addExplanationButton();
-    }
-    addQuestion(elements) {
+    renderQuestions() {
         let questionElement = document.createElement("div");
         questionElement.classList.add("quiz_question");
-        questionElement = Content.CombineELements(questionElement, ...elements);
+        questionElement = Content.CombineELements(questionElement, ...this.questionElements);
         this.element.appendChild(questionElement);
     }
-    addOptions() {
+    renderOptions() {
         const existingOptionsElement = this.element.querySelector(".quiz_options");
         if (existingOptionsElement) {
             this.element.removeChild(existingOptionsElement);
         }
         let optionsElement = document.createElement("div");
         optionsElement.classList.add("quiz_options");
+        let isCompleted = this.state.status === "completed";
         this.options.forEach((ele, index) => {
             const optionContainer = document.createElement("div");
             optionContainer.classList.add(`option_container`, `option_container_${index + 1}`);
@@ -26784,7 +26798,8 @@ class Quiz {
             radio.name = `quiz_${this.id}_option`;
             radio.id = `quiz_${this.id}_option_${index + 1}`;
             radio.classList.add("option_input");
-            radio.checked = this.state.selectedOptions.has(index + 1);
+            radio.checked = isCompleted ? false : this.state.selectedOptions.has(index + 1);
+            radio.disabled = isCompleted;
             // Create X mark element (initially hidden)
             const xMark = document.createElement("span");
             xMark.classList.add("x-mark");
@@ -26795,14 +26810,23 @@ class Quiz {
             label.classList.add("option_label");
             const optionElement = ele.getElement();
             optionElement.classList.add(`option`, `option_${index + 1}`);
-            const handleClick = () => this.onOptionClick(index + 1);
-            radio.addEventListener("change", handleClick);
-            optionContainer.addEventListener("click", (e) => {
-                if (e.target !== radio && !this.state.disabledOptions.has(index + 1)) {
-                    radio.checked = true;
-                    handleClick();
+            if (isCompleted) {
+                if (this.correctOptions.includes(index + 1)) {
+                    optionContainer.classList.add("selected");
                 }
-            });
+                else {
+                    optionContainer.classList.add("disabled");
+                }
+            }
+            else {
+                const handleClick = () => this.onOptionClick(index + 1);
+                optionContainer.addEventListener("click", (e) => {
+                    if (e.target !== radio && !this.state.disabledOptions.has(index + 1)) {
+                        radio.checked = true;
+                        handleClick();
+                    }
+                });
+            }
             label.appendChild(radio);
             label.appendChild(xMark);
             label.appendChild(optionElement);
@@ -26811,6 +26835,54 @@ class Quiz {
             optionsElement.appendChild(optionContainer);
         });
         this.element.appendChild(optionsElement);
+    }
+    renderExplanationButton() {
+        const explanationButton = document.createElement("button");
+        explanationButton.textContent = "Show Explanation";
+        explanationButton.classList.add("quiz_explanation_button");
+        explanationButton.addEventListener("click", () => this.toggleExplanation());
+        const quiz_footer = this.getQuizzFooter();
+        quiz_footer.appendChild(explanationButton);
+    }
+    renderExplanation() {
+        const explanationContent = document.createElement("div");
+        explanationContent.classList.add("quiz_explanation_content");
+        explanationContent.style.display = this.state.isExplanationViewed ? "block" : "none";
+        this.explanationElements.forEach((element) => element.appendTo(explanationContent));
+        this.element.appendChild(explanationContent);
+    }
+    renderHint() {
+        const hintElement = document.createElement("div");
+        hintElement.classList.add("quiz_hint");
+        hintElement.style.display = this.state.showHint ? "block" : "none";
+        this.element.appendChild(hintElement);
+    }
+    renderSubmitButton() {
+        const submitButton = document.createElement("button");
+        submitButton.textContent = "Check";
+        const quiz_footer = this.getQuizzFooter();
+        submitButton.style.display = this.state.showSubmit ? "block" : "none";
+        submitButton.classList.add("quiz_submit");
+        submitButton.addEventListener("click", () => this.onSubmit());
+        quiz_footer.appendChild(submitButton);
+    }
+    toggleExplanation() {
+        this.setState({
+            isExplanationViewed: true,
+            showSubmit: false,
+            isExplanationVisible: !this.state.isExplanationVisible
+        });
+        this.emit("explanationToggle", this.state.isExplanationVisible);
+    }
+    setupQuizClickHandler() {
+        this.element.addEventListener('click', (event) => {
+            const target = event.target;
+            // Don't trigger if clicking on or within these elements
+            const isInteractiveElement = target.closest('.quiz_submit');
+            if (!isInteractiveElement) {
+                this.hideHint();
+            }
+        });
     }
     onOptionClick(clickedIndex) {
         if (this.state.disabledOptions.has(clickedIndex)) {
@@ -26832,45 +26904,6 @@ class Quiz {
         this.setState({ selectedOptions: newSelectedOptions });
         this.emit("selection", Array.from(newSelectedOptions));
     }
-    addExplanationButton() {
-        const explanationButton = document.createElement("button");
-        explanationButton.textContent = "Show Explanation";
-        explanationButton.classList.add("quiz_explanation_button");
-        explanationButton.addEventListener("click", () => this.toggleExplanation());
-        const quiz_footer = this.getQuizzFooter();
-        quiz_footer.appendChild(explanationButton);
-    }
-    addExplanationContent() {
-        const explanationContent = document.createElement("div");
-        explanationContent.classList.add("quiz_explanation_content");
-        explanationContent.style.display = "none";
-        this.explanationElements.forEach((element) => element.appendTo(explanationContent));
-        this.element.appendChild(explanationContent);
-    }
-    toggleExplanation() {
-        this.setState({
-            isExplanationViewed: true,
-            showSubmit: false,
-            isExplanationVisible: !this.state.isExplanationVisible
-        });
-        this.emit("explanationToggle", this.state.isExplanationVisible);
-    }
-    addHint() {
-        if (this.hint) {
-            const hintElement = document.createElement("div");
-            hintElement.classList.add("quiz_hint");
-            hintElement.textContent = `Hint: ${this.hint}`;
-            this.element.appendChild(hintElement);
-        }
-    }
-    addSubmitButton() {
-        const submitButton = document.createElement("button");
-        submitButton.textContent = "Check";
-        const quiz_footer = this.getQuizzFooter();
-        submitButton.classList.add("quiz_submit");
-        submitButton.addEventListener("click", () => this.onSubmit());
-        quiz_footer.appendChild(submitButton);
-    }
     getQuizzFooter() {
         if (!this.quiz_footer) {
             this.quiz_footer = document.createElement("div");
@@ -26881,17 +26914,16 @@ class Quiz {
     }
     onSubmit() {
         const selectedArray = Array.from(this.state.selectedOptions);
-        this.emit("submit", selectedArray);
+        const isCorrect = this.checkAnswer();
+        this.emit("submit", { isCorrect, selectedArray });
     }
-    answerIsRight() {
-        this.setState({ status: "correct" });
-        this.emit("correct");
+    showHint(hintText) {
+        this.setState({ showHint: true, hint: hintText });
     }
-    answerIsWrong() {
-        this.setState({ status: 'wrong' });
-        this.emit("wrong");
+    hideHint() {
+        this.setState({ showHint: false, hint: "" });
     }
-    checkAnswer(showHighlight = true) {
+    checkAnswer() {
         const selectedArray = Array.from(this.state.selectedOptions).sort();
         const correctArray = [...this.correctOptions].sort();
         const isCorrect = this.arraysEqual(selectedArray, correctArray);
@@ -26902,17 +26934,19 @@ class Quiz {
                 newDisabledOptions.add(option);
                 this.setState({
                     disabledOptions: newDisabledOptions,
-                    remainingAttempts: this.state.remainingAttempts - 1
                 });
             });
-            // If no more attempts, show correct answer
-            if (this.state.remainingAttempts === 0) {
-                this.setState({ showSubmit: false });
-                this.answerIsWrong();
+            const remainingValidOptions = this.options.length - this.state.disabledOptions.size;
+            // If only one valid option remains, it must be correct, so show it
+            if (remainingValidOptions <= 1) {
+                this.setState({
+                    showSubmit: false,
+                    status: "wrong",
+                });
             }
         }
         else {
-            this.answerIsRight();
+            this.setState({ showSubmit: false, status: 'correct' });
         }
         return isCorrect;
     }
@@ -27017,7 +27051,8 @@ class Markup {
     }
 }
 class InputQuiz {
-    constructor(questionElements, hint = "", explanationElements = []) {
+    constructor(inputType, questionElements, hint = "", explanationElements = []) {
+        this.inputType = inputType;
         this.id = "";
         this.type = "input_quiz";
         this.questionElements = [];
@@ -27029,7 +27064,7 @@ class InputQuiz {
         this.hint = hint;
         this.explanationElements = explanationElements;
         this.inputElement = document.createElement("input");
-        this.inputElement.type = "text";
+        this.inputElement.type = inputType;
         this.initQuiz();
     }
     initQuiz() {
@@ -27047,6 +27082,7 @@ class InputQuiz {
     }
     addInputField() {
         this.inputElement.classList.add("input_quiz_input");
+        this.inputElement.addEventListener("input", (e) => this.emit("onchange", this.inputElement.value));
         this.element.appendChild(this.inputElement);
     }
     addHint() {
@@ -27117,6 +27153,31 @@ class InputQuiz {
         return [...this.questionElements, ...this.explanationElements];
     }
 }
+let Image$1 = class Image {
+    constructor(src, width, height) {
+        this.src = src;
+        this.width = width;
+        this.height = height;
+        this.type = "image";
+        this.id = "";
+        this.element = document.createElement("img");
+    }
+    appendTo(container) {
+        this.element.src = this.src;
+        this.element.width = this.width;
+        this.element.classList.add("img");
+        const img_container = document.createElement("div");
+        img_container.classList.add("img_container");
+        if (this.height) {
+            this.element.height = this.height;
+        }
+        img_container.appendChild(this.element);
+        container.appendChild(img_container);
+    }
+    getElement() {
+        return this.element;
+    }
+};
 
 /**
  * convert a function that modifies a path of a diagram to a function that modifies a diagram
@@ -30306,5 +30367,5 @@ var encoding = /*#__PURE__*/Object.freeze({
     encode: encode
 });
 
-export { Banner, Content, Diagram, Drawing, Header, InputQuiz, Interactive, Markup, Paragraph, Path, Quiz, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text$2 as text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
+export { Banner, Content, Diagram, Drawing, Header, Image$1 as Image, InputQuiz, Interactive, Markup, Paragraph, Path, Quiz, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text$2 as text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
 //# sourceMappingURL=diagrams.js.map

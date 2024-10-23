@@ -259,10 +259,11 @@ interface QuizState {
     isExplanationVisible: boolean;
     isExplanationViewed: boolean;
     selectedOptions: Set<number>;
-    status: "un-attempt" | "correct" | "wrong";
-    remainingAttempts: number;
+    status: "un-attempt" | "correct" | "wrong" | "completed";
     disabledOptions: Set<number>;
     answerRevealed: boolean;
+    showHint: boolean;
+    hint: string;
 }
 
 export class Quiz implements ContentElement {
@@ -274,7 +275,6 @@ export class Quiz implements ContentElement {
     private explanationElements: ContentElement[] = [];
     private callbacks: { [event: string]: Function[] } = {};
     public isMultipleSelection: boolean;
-    public hint: string;
     public readonly correctOptions: number[] = []
     private quiz_footer: HTMLDivElement | null = null;
 
@@ -283,33 +283,31 @@ export class Quiz implements ContentElement {
         showSubmit: true,
         isExplanationVisible: false,
         isExplanationViewed: false,
+        showHint: false,
         selectedOptions: new Set(),
         status: 'un-attempt',
-        remainingAttempts: 0,
+        hint: "",
         disabledOptions: new Set(),
         answerRevealed: false
     };
 
     constructor(
+        status: QuizState['status'],
         questionElements: ContentElement[],
         options: ContentElement[],
         isMultipleSelection: boolean = false,
         explanationElements: ContentElement[] = [],
-        hint: string = "",
         correctOptions: number[] = []
     ) {
         this.element = document.createElement('div');
         this.questionElements = questionElements;
         this.options = options;
         this.isMultipleSelection = isMultipleSelection;
-        this.hint = hint;
         this.explanationElements = explanationElements;
         this.correctOptions = correctOptions;
+        this.state = { ...this.state, status, showSubmit: status !== "completed" }
         this.initQuizz();
-        this.state = {
-            ...this.state,
-            remainingAttempts: options.length - 1,
-        };
+        this.setupQuizClickHandler();
     }
 
     public setState(newState: Partial<QuizState>) {
@@ -317,6 +315,17 @@ export class Quiz implements ContentElement {
         this.state = { ...this.state, ...newState };
         this.updateUI(oldState);
     }
+
+    private initQuizz() {
+        this.renderQuestions();
+        this.renderOptions();
+        this.renderHint();
+        this.renderExplanation();
+        this.renderSubmitButton();
+        this.renderExplanationButton();
+    }
+
+
 
     private updateUI(oldState: QuizState) {
         // Update submit button text
@@ -350,7 +359,7 @@ export class Quiz implements ContentElement {
             const optionsElement = this.element.querySelector(".quiz_options");
 
             if (this.state.answerRevealed) return
-            if (this.state.status === "correct") return
+            if (this.state.status === "correct" || this.state.status === "completed") return
 
             if (optionsElement) {
                 this.options.forEach((_, index) => {
@@ -424,7 +433,7 @@ export class Quiz implements ContentElement {
         }
 
         // Highlight correct answer if no more attempts
-        if (this.state.remainingAttempts === 0 && this.state.status === "wrong") {
+        if (oldState.status !== this.state.status && this.state.status === "wrong") {
             this.correctOptions.forEach(correctIndex => {
                 const optionContainer = this.element.querySelector(
                     `.option_container_${correctIndex}`
@@ -440,25 +449,29 @@ export class Quiz implements ContentElement {
                 }
             });
         }
+
+        //  show thhe hint
+        if (oldState.showHint !== this.state.showHint) {
+            const hintElement = this.element.querySelector(".quiz_hint") as HTMLDivElement;
+            if (hintElement && this.state.showHint) {
+                hintElement.innerText = this.state.hint;
+                hintElement.style.display = "block"
+            } else {
+                hintElement.innerHTML = "";
+                hintElement.style.display = "none"
+            }
+        }
     }
 
-    private initQuizz() {
-        this.addQuestion(this.questionElements);
-        this.addOptions();
-        this.addHint();
-        this.addExplanationContent();
-        this.addSubmitButton();
-        this.addExplanationButton();
-    }
 
-    private addQuestion(elements: ContentElement[]) {
+    private renderQuestions() {
         let questionElement = document.createElement("div");
         questionElement.classList.add("quiz_question");
-        questionElement = Content.CombineELements(questionElement, ...elements);
+        questionElement = Content.CombineELements(questionElement, ...this.questionElements);
         this.element.appendChild(questionElement);
     }
 
-    private addOptions() {
+    private renderOptions() {
         const existingOptionsElement = this.element.querySelector(".quiz_options");
         if (existingOptionsElement) {
             this.element.removeChild(existingOptionsElement);
@@ -466,6 +479,8 @@ export class Quiz implements ContentElement {
 
         let optionsElement = document.createElement("div");
         optionsElement.classList.add("quiz_options");
+
+        let isCompleted = this.state.status === "completed"
 
         this.options.forEach((ele, index) => {
             const optionContainer = document.createElement("div");
@@ -476,7 +491,9 @@ export class Quiz implements ContentElement {
             radio.name = `quiz_${this.id}_option`;
             radio.id = `quiz_${this.id}_option_${index + 1}`;
             radio.classList.add("option_input");
-            radio.checked = this.state.selectedOptions.has(index + 1);
+            radio.checked = isCompleted ? false : this.state.selectedOptions.has(index + 1);
+            radio.disabled = isCompleted
+
 
             // Create X mark element (initially hidden)
             const xMark = document.createElement("span");
@@ -491,14 +508,21 @@ export class Quiz implements ContentElement {
             const optionElement = ele.getElement();
             optionElement.classList.add(`option`, `option_${index + 1}`);
 
-            const handleClick = () => this.onOptionClick(index + 1);
-            radio.addEventListener("change", handleClick);
-            optionContainer.addEventListener("click", (e) => {
-                if (e.target !== radio && !this.state.disabledOptions.has(index + 1)) {
-                    radio.checked = true;
-                    handleClick();
+            if (isCompleted) {
+                if (this.correctOptions.includes(index + 1)) {
+                    optionContainer.classList.add("selected")
+                } else {
+                    optionContainer.classList.add("disabled")
                 }
-            });
+            } else {
+                const handleClick = () => this.onOptionClick(index + 1);
+                optionContainer.addEventListener("click", (e) => {
+                    if (e.target !== radio && !this.state.disabledOptions.has(index + 1)) {
+                        radio.checked = true;
+                        handleClick();
+                    }
+                });
+            }
 
             label.appendChild(radio);
             label.appendChild(xMark);
@@ -512,6 +536,66 @@ export class Quiz implements ContentElement {
         this.element.appendChild(optionsElement);
     }
 
+    private renderExplanationButton() {
+        const explanationButton = document.createElement("button");
+        explanationButton.textContent = "Show Explanation";
+        explanationButton.classList.add("quiz_explanation_button");
+        explanationButton.addEventListener("click", () => this.toggleExplanation());
+        const quiz_footer = this.getQuizzFooter();
+        quiz_footer.appendChild(explanationButton);
+    }
+
+    private renderExplanation() {
+        const explanationContent = document.createElement("div");
+        explanationContent.classList.add("quiz_explanation_content");
+        explanationContent.style.display = this.state.isExplanationViewed ? "block" : "none";
+        this.explanationElements.forEach((element) =>
+            element.appendTo(explanationContent)
+        );
+        this.element.appendChild(explanationContent);
+    }
+
+
+
+    private renderHint() {
+        const hintElement = document.createElement("div");
+        hintElement.classList.add("quiz_hint");
+        hintElement.style.display = this.state.showHint ? "block" : "none";
+        this.element.appendChild(hintElement);
+    }
+
+    private renderSubmitButton() {
+        const submitButton = document.createElement("button");
+        submitButton.textContent = "Check";
+        const quiz_footer = this.getQuizzFooter();
+        submitButton.style.display = this.state.showSubmit ? "block" : "none";
+        submitButton.classList.add("quiz_submit");
+        submitButton.addEventListener("click", () => this.onSubmit());
+        quiz_footer.appendChild(submitButton);
+    }
+
+    private toggleExplanation() {
+        this.setState({
+            isExplanationViewed: true,
+            showSubmit: false,
+            isExplanationVisible: !this.state.isExplanationVisible
+        });
+
+        this.emit("explanationToggle", this.state.isExplanationVisible);
+    }
+
+    private setupQuizClickHandler() {
+        this.element.addEventListener('click', (event) => {
+            const target = event.target as HTMLElement;
+
+            // Don't trigger if clicking on or within these elements
+            const isInteractiveElement = target.closest('.quiz_submit')
+
+            if (!isInteractiveElement) {
+                this.hideHint();
+            }
+        });
+    }
 
     private onOptionClick(clickedIndex: number) {
         if (this.state.disabledOptions.has(clickedIndex)) {
@@ -535,53 +619,6 @@ export class Quiz implements ContentElement {
         this.emit("selection", Array.from(newSelectedOptions));
     }
 
-    private addExplanationButton() {
-        const explanationButton = document.createElement("button");
-        explanationButton.textContent = "Show Explanation";
-        explanationButton.classList.add("quiz_explanation_button");
-        explanationButton.addEventListener("click", () => this.toggleExplanation());
-        const quiz_footer = this.getQuizzFooter();
-        quiz_footer.appendChild(explanationButton);
-    }
-
-    private addExplanationContent() {
-        const explanationContent = document.createElement("div");
-        explanationContent.classList.add("quiz_explanation_content");
-        explanationContent.style.display = "none";
-        this.explanationElements.forEach((element) =>
-            element.appendTo(explanationContent)
-        );
-        this.element.appendChild(explanationContent);
-    }
-
-    private toggleExplanation() {
-        this.setState({
-            isExplanationViewed: true,
-            showSubmit: false,
-            isExplanationVisible: !this.state.isExplanationVisible
-        });
-
-        this.emit("explanationToggle", this.state.isExplanationVisible);
-    }
-
-    private addHint() {
-        if (this.hint) {
-            const hintElement = document.createElement("div");
-            hintElement.classList.add("quiz_hint");
-            hintElement.textContent = `Hint: ${this.hint}`;
-            this.element.appendChild(hintElement);
-        }
-    }
-
-    private addSubmitButton() {
-        const submitButton = document.createElement("button");
-        submitButton.textContent = "Check";
-        const quiz_footer = this.getQuizzFooter();
-        submitButton.classList.add("quiz_submit");
-        submitButton.addEventListener("click", () => this.onSubmit());
-        quiz_footer.appendChild(submitButton);
-    }
-
     private getQuizzFooter() {
         if (!this.quiz_footer) {
             this.quiz_footer = document.createElement("div");
@@ -593,20 +630,19 @@ export class Quiz implements ContentElement {
 
     private onSubmit() {
         const selectedArray = Array.from(this.state.selectedOptions);
-        this.emit("submit", selectedArray);
+        const isCorrect = this.checkAnswer()
+        this.emit("submit", { isCorrect, selectedArray });
     }
 
-    public answerIsRight() {
-        this.setState({ status: "correct" });
-        this.emit("correct")
+    public showHint(hintText: string) {
+        this.setState({ showHint: true, hint: hintText })
     }
 
-    public answerIsWrong() {
-        this.setState({ status: 'wrong' })
-        this.emit("wrong")
+    public hideHint() {
+        this.setState({ showHint: false, hint: "" })
     }
 
-    public checkAnswer(showHighlight: boolean = true): boolean {
+    public checkAnswer(): boolean {
         const selectedArray = Array.from(this.state.selectedOptions).sort();
         const correctArray = [...this.correctOptions].sort();
         const isCorrect = this.arraysEqual(selectedArray, correctArray);
@@ -618,17 +654,20 @@ export class Quiz implements ContentElement {
                 newDisabledOptions.add(option);
                 this.setState({
                     disabledOptions: newDisabledOptions,
-                    remainingAttempts: this.state.remainingAttempts - 1
                 });
             });
 
-            // If no more attempts, show correct answer
-            if (this.state.remainingAttempts === 0) {
-                this.setState({ showSubmit: false });
-                this.answerIsWrong();
+            const remainingValidOptions = this.options.length - this.state.disabledOptions.size;
+
+            // If only one valid option remains, it must be correct, so show it
+            if (remainingValidOptions <= 1) {
+                this.setState({
+                    showSubmit: false,
+                    status: "wrong",
+                });
             }
         } else {
-            this.answerIsRight();
+            this.setState({ showSubmit: false, status: 'correct' })
         }
 
         return isCorrect;
@@ -763,6 +802,7 @@ export class InputQuiz implements ContentElement {
     private isExplanationVisible: boolean = false;
 
     constructor(
+        public inputType: string,
         questionElements: ContentElement[],
         hint: string = "",
         explanationElements: ContentElement[] = []
@@ -772,7 +812,7 @@ export class InputQuiz implements ContentElement {
         this.hint = hint;
         this.explanationElements = explanationElements;
         this.inputElement = document.createElement("input");
-        this.inputElement.type = "text";
+        this.inputElement.type = inputType;
         this.initQuiz();
     }
 
@@ -793,6 +833,7 @@ export class InputQuiz implements ContentElement {
 
     private addInputField() {
         this.inputElement.classList.add("input_quiz_input");
+        this.inputElement.addEventListener("input", (e) => this.emit("onchange", this.inputElement.value))
         this.element.appendChild(this.inputElement);
     }
 
@@ -879,5 +920,32 @@ export class InputQuiz implements ContentElement {
 
     getSubElements(): ContentElement[] {
         return [...this.questionElements, ...this.explanationElements];
+    }
+}
+
+
+export class Image implements ContentElement {
+    type: string = "image";
+    id: string = "";
+    element: HTMLImageElement;
+    constructor(public src: string, public width: number, public height?: number) {
+        this.element = document.createElement("img");
+    }
+
+    appendTo(container: HTMLDivElement): void {
+        this.element.src = this.src;
+        this.element.width = this.width;
+        this.element.classList.add("img")
+        const img_container = document.createElement("div")
+        img_container.classList.add("img_container")
+        if (this.height) {
+            this.element.height = this.height
+        }
+        img_container.appendChild(this.element)
+        container.appendChild(img_container)
+    }
+
+    getElement(): Element {
+        return this.element;
     }
 }
