@@ -52,7 +52,6 @@ export type LinearGradient = {
 }
 
 export type TextData = {
-    "color": string,
     "text": string,
     "font-family": string,
     "font-size": string,
