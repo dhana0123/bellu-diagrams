@@ -26759,7 +26759,7 @@ class Quiz extends ReactiveElement {
         this.type = "quiz";
         this.quiz_footer = null;
         this.element = document.createElement('div'),
-            this.state = {
+            this.state = this.createState({
                 questionElements: questionElements,
                 optionsElements: optionsElements,
                 isMultipleSelection: isMultipleSelection,
@@ -26775,7 +26775,7 @@ class Quiz extends ReactiveElement {
                 hint: "",
                 disabledOptions: new Set(),
                 isExplanationViewed: false,
-            };
+            });
         this.initQuizz();
         this.setupQuizClickHandler();
     }
@@ -27062,7 +27062,7 @@ class Quiz extends ReactiveElement {
             newSelectedOptions.clear();
             newSelectedOptions.add(clickedIndex);
         }
-        this.setState({ selectedOptions: newSelectedOptions });
+        this.setState({ selectedOptions: new Set(newSelectedOptions) });
         this.emit("selection", Array.from(newSelectedOptions));
     }
     getQuizzFooter() {
@@ -27235,7 +27235,6 @@ class InputQuiz extends ReactiveElement {
         explanationContent.style.display = isVisible ? "block" : "none";
     }
     onShowHintChange(showHint) {
-        console.log('shoHINTTT');
         const hintElement = this.element.querySelector(`.${InputQuiz.SELECTORS.HINT}`);
         if (hintElement && showHint) {
             hintElement.style.display = showHint ? "block" : "none";

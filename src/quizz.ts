@@ -46,7 +46,6 @@ export abstract class ReactiveElement<TState extends object> {
     }
 }
 
-
 interface QuizState {
     showSubmit: boolean;
     showExplanation: boolean;
@@ -84,7 +83,7 @@ export class Quiz extends ReactiveElement<QuizState> implements ContentElement {
     ) {
         super();
         this.element = document.createElement('div'),
-            this.state = {
+            this.state = this.createState({
                 questionElements: questionElements,
                 optionsElements: optionsElements,
                 isMultipleSelection: isMultipleSelection,
@@ -100,7 +99,7 @@ export class Quiz extends ReactiveElement<QuizState> implements ContentElement {
                 hint: "",
                 disabledOptions: new Set(),
                 isExplanationViewed: false,
-            }
+            })
         this.initQuizz();
         this.setupQuizClickHandler();
     }
@@ -453,8 +452,9 @@ export class Quiz extends ReactiveElement<QuizState> implements ContentElement {
             newSelectedOptions.add(clickedIndex);
         }
 
-        this.setState({ selectedOptions: newSelectedOptions });
+        this.setState({ selectedOptions: new Set(newSelectedOptions) });
         this.emit("selection", Array.from(newSelectedOptions));
+
     }
 
     private getQuizzFooter() {
@@ -680,7 +680,6 @@ export class InputQuiz extends ReactiveElement<InputState> implements ContentEle
     }
 
     private onShowHintChange(showHint: boolean) {
-        console.log('shoHINTTT')
         const hintElement = this.element.querySelector(`.${InputQuiz.SELECTORS.HINT}`) as HTMLDivElement;
         if (hintElement && showHint) {
             hintElement.style.display = showHint ? "block" : "none"
