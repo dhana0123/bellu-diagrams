@@ -937,37 +937,42 @@ declare class Image implements ContentElement {
     getElement(): Element;
 }
 
+declare abstract class ReactiveElement<TState extends object> {
+    protected subscribers: Map<string, Set<(value: any) => void>>;
+    protected state: TState;
+    protected createState(initialState: TState): TState;
+    protected setState<K extends keyof TState>(state: Pick<TState, K>): void;
+    subscribe(property: string, callback: (value: any) => void): void;
+    unsubscribe(property: string, callback: (value: any) => void): void;
+    emit(eventName: string, data?: any): void;
+    on(eventName: string, callback: Function): void;
+}
 interface QuizState {
     showSubmit: boolean;
-    isExplanationVisible: boolean;
+    showExplanation: boolean;
     isExplanationViewed: boolean;
+    isMultipleSelection: boolean;
     selectedOptions: Set<number>;
+    correctOptions: number[];
+    optionType: OptionType;
     status: "un-attempt" | "correct" | "wrong" | "completed";
     disabledOptions: Set<number>;
-    answerRevealed: boolean;
+    isAnswerRevealed: boolean;
     showHint: boolean;
     hint: string;
+    questionElements: ContentElement[];
+    explanationElements: ContentElement[];
+    optionsElements: ContentElement[];
 }
 type OptionType = "grid" | "list";
-declare class Quiz implements ContentElement {
+declare class Quiz extends ReactiveElement<QuizState> implements ContentElement {
     id: string;
     readonly type: string;
-    private questionElements;
-    private options;
     element: Element;
-    private explanationElements;
-    private callbacks;
-    isMultipleSelection: boolean;
-    readonly correctOptions: number[];
     private quiz_footer;
-    optionType: OptionType;
+    constructor(status: QuizState['status'], optionType: OptionType, questionElements: ContentElement[], optionsElements: ContentElement[], isMultipleSelection?: boolean, explanationElements?: ContentElement[], correctOptions?: number[]);
     private static readonly SELECTORS;
-    private static readonly CLASSES;
-    state: QuizState;
-    constructor(status: QuizState['status'], optionType: OptionType, questionElements: ContentElement[], options: ContentElement[], isMultipleSelection?: boolean, explanationElements?: ContentElement[], correctOptions?: number[]);
-    setState(newState: Partial<QuizState>): void;
     private initQuizz;
-    private set;
     private renderQuestions;
     private renderOptions;
     private renderExplanationButton;
@@ -977,6 +982,13 @@ declare class Quiz implements ContentElement {
     private renderResetButton;
     private toggleExplanation;
     private resetQuiz;
+    private onShowSubmitChange;
+    private onShowExplanationChange;
+    private onSelectedOptionsChange;
+    private onIsAnswerReaveledChange;
+    private onDisabledOptionsChange;
+    private onStatusChange;
+    private onShowHintChange;
     private setupQuizClickHandler;
     private onOptionClick;
     private getQuizzFooter;
@@ -985,26 +997,27 @@ declare class Quiz implements ContentElement {
     hideHint(): void;
     checkAnswer(): boolean;
     private arraysEqual;
-    emit(eventName: string, data?: any): void;
-    on(eventName: string, callback: Function): void;
     getElement(): Element;
     appendTo(container: HTMLDivElement): void;
     getSubElements(): ContentElement[];
 }
-declare class InputQuiz implements ContentElement {
+type InputState = {
+    questionElements: ContentElement[];
+    inputValue: string;
+    explanationElements: ContentElement[];
+    isExplanationVisible: boolean;
+    showHint: boolean;
+    hint: string;
+};
+declare class InputQuiz extends ReactiveElement<InputState> implements ContentElement {
     inputType: string;
     id: string;
     readonly type: string;
-    private state;
     private static readonly SELECTORS;
-    private subscribers;
     element: Element;
     private inputElement;
     constructor(inputType: string, questionElements: ContentElement[], explanationElements?: ContentElement[]);
     private setupQuizClickHandler;
-    private createState;
-    subscribe(property: string, callback: (value: any) => void): void;
-    unsubscribe(property: string, callback: (value: any) => void): void;
     private initQuiz;
     private renderQuestion;
     private renderInputField;
@@ -1014,11 +1027,8 @@ declare class InputQuiz implements ContentElement {
     private onExplanationVisibilityChange;
     private onShowHintChange;
     private onHintChange;
-    private setState;
     showHint(text: string): void;
     private onInputValueChange;
-    emit(eventName: string, data?: any): void;
-    on(eventName: string, callback: Function): void;
     getElement(): Element;
     appendTo(container: HTMLDivElement): void;
     getSubElements(): ContentElement[];

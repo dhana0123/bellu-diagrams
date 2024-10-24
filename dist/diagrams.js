@@ -26709,44 +26709,75 @@ let Image$1 = class Image {
     }
 };
 
-class Quiz {
-    constructor(status, optionType, questionElements, options, isMultipleSelection = false, explanationElements = [], correctOptions = []) {
+class ReactiveElement {
+    constructor() {
+        this.subscribers = new Map();
+    }
+    createState(initialState) {
+        return new Proxy(initialState, {
+            set: (target, property, value) => {
+                var _a;
+                const oldValue = target[property];
+                target[property] = value;
+                if (oldValue !== value && this.subscribers.has(property)) {
+                    (_a = this.subscribers.get(property)) === null || _a === void 0 ? void 0 : _a.forEach(callback => callback(value));
+                }
+                return true;
+            }
+        });
+    }
+    setState(state) {
+        Object.keys(state).forEach(key => {
+            this.state[key] = state[key];
+        });
+    }
+    subscribe(property, callback) {
+        var _a;
+        if (!this.subscribers.has(property)) {
+            this.subscribers.set(property, new Set());
+        }
+        (_a = this.subscribers.get(property)) === null || _a === void 0 ? void 0 : _a.add(callback);
+    }
+    unsubscribe(property, callback) {
+        var _a;
+        (_a = this.subscribers.get(property)) === null || _a === void 0 ? void 0 : _a.delete(callback);
+    }
+    emit(eventName, data) {
+        var _a;
+        if (this.subscribers.has(eventName)) {
+            (_a = this.subscribers.get(eventName)) === null || _a === void 0 ? void 0 : _a.forEach(callback => callback(data));
+        }
+    }
+    on(eventName, callback) {
+        this.subscribe(eventName, callback);
+    }
+}
+class Quiz extends ReactiveElement {
+    constructor(status, optionType, questionElements, optionsElements, isMultipleSelection = false, explanationElements = [], correctOptions = []) {
+        super();
         this.id = "";
         this.type = "quiz";
-        this.questionElements = [];
-        this.options = [];
-        this.explanationElements = [];
-        this.callbacks = {};
-        this.correctOptions = [];
         this.quiz_footer = null;
-        this.optionType = "list";
-        // State management
-        this.state = {
-            showSubmit: true,
-            isExplanationVisible: false,
-            isExplanationViewed: false,
-            showHint: false,
-            selectedOptions: new Set(),
-            status: 'un-attempt',
-            hint: "",
-            disabledOptions: new Set(),
-            answerRevealed: false
-        };
-        this.element = document.createElement('div');
-        this.questionElements = questionElements;
-        this.options = options;
-        this.isMultipleSelection = isMultipleSelection;
-        this.explanationElements = explanationElements;
-        this.correctOptions = correctOptions;
-        this.optionType = optionType;
-        this.state = Object.assign(Object.assign({}, this.state), { status, showSubmit: status !== "completed" });
+        this.element = document.createElement('div'),
+            this.state = {
+                questionElements: questionElements,
+                optionsElements: optionsElements,
+                isMultipleSelection: isMultipleSelection,
+                explanationElements: explanationElements,
+                correctOptions: correctOptions,
+                optionType: optionType,
+                showSubmit: status !== "completed",
+                status: status,
+                selectedOptions: new Set(),
+                showExplanation: false,
+                isAnswerRevealed: false,
+                showHint: false,
+                hint: "",
+                disabledOptions: new Set(),
+                isExplanationViewed: false,
+            };
         this.initQuizz();
         this.setupQuizClickHandler();
-    }
-    setState(newState) {
-        const oldState = Object.assign({}, this.state);
-        this.state = Object.assign(Object.assign({}, this.state), newState);
-        this.set(oldState);
     }
     initQuizz() {
         this.renderQuestions();
@@ -26754,157 +26785,37 @@ class Quiz {
         this.renderHint();
         this.renderExplanation();
         this.renderSubmitButton();
-        this.renderExplanationButton();
         this.renderResetButton();
-    }
-    set(oldState) {
-        // Update submit button text
-        if (oldState.showSubmit !== this.state.showSubmit) {
-            const submitButton = document.querySelector(Quiz.SELECTORS.SUBMIT_BUTTON);
-            if (submitButton) {
-                submitButton.style.display = this.state.showSubmit ? "display" : "none";
-            }
-        }
-        // Update explanation visibility
-        if (oldState.isExplanationVisible !== this.state.isExplanationVisible) {
-            const explanationButton = this.element.querySelector(Quiz.SELECTORS.EXPLANATION_BUTTON);
-            const explanationContent = this.element.querySelector(Quiz.SELECTORS.EXPLANTION_CONTENT);
-            if (this.state.isExplanationVisible) {
-                explanationButton.textContent = "Hide Explanation";
-                explanationContent.style.display = "block";
-            }
-            else {
-                explanationButton.textContent = "Show Explanation";
-                explanationContent.style.display = "none";
-            }
-        }
-        // Update selected options
-        if (oldState.selectedOptions !== this.state.selectedOptions) {
-            const optionsElement = document.querySelector(Quiz.SELECTORS.OPTIONS);
-            if (this.state.answerRevealed)
-                return;
-            if (this.state.status === Quiz.CLASSES.CORRECT || this.state.status === Quiz.CLASSES.COMPLETED)
-                return;
-            if (optionsElement) {
-                this.options.forEach((_, index) => {
-                    const optionElement = optionsElement.querySelector(Quiz.SELECTORS.OPTION(index + 1));
-                    const optionContainer = optionsElement.querySelector(Quiz.SELECTORS.OPTION_CONTAINER(index + 1));
-                    if (optionContainer && optionElement) {
-                        if (this.state.selectedOptions.has(index + 1)) {
-                            optionElement.classList.add(Quiz.CLASSES.SELECTED);
-                            optionContainer.classList.add(Quiz.CLASSES.SELECTED);
-                        }
-                        else {
-                            optionElement.classList.remove(Quiz.CLASSES.SELECTED);
-                            optionContainer.classList.remove(Quiz.CLASSES.SELECTED);
-                        }
-                    }
-                });
-            }
-        }
-        // upate on answer revalead
-        if (oldState.answerRevealed !== this.state.answerRevealed) {
-            const optionsElement = document.querySelector(Quiz.SELECTORS.OPTIONS);
-            if (optionsElement) {
-                (this.options || []).map((_, index) => {
-                    const optionElement = optionsElement.querySelector(Quiz.SELECTORS.OPTION(index + 1));
-                    const optionContainer = optionsElement.querySelector(Quiz.SELECTORS.OPTION_CONTAINER(index + 1));
-                    if (optionContainer && optionElement) {
-                        optionElement.classList.remove(Quiz.CLASSES.SELECTED);
-                        optionContainer.classList.remove(Quiz.CLASSES.SELECTED);
-                    }
-                });
-            }
-        }
-        // update the interaction
-        if (oldState.status !== this.state.status) {
-            const quiz = this.element.closest(Quiz.SELECTORS.QUIZ);
-            if (quiz) {
-                quiz.setAttribute("data-status", this.state.status);
-            }
-        }
-        // Update disabled options
-        if (oldState.disabledOptions !== this.state.disabledOptions) {
-            const optionsElement = document.querySelector(Quiz.SELECTORS.OPTIONS);
-            if (optionsElement) {
-                this.options.forEach((_, index) => {
-                    const optionContainer = optionsElement.querySelector(Quiz.SELECTORS.OPTION_CONTAINER(index + 1));
-                    const radio = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector('input');
-                    const xMark = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector(Quiz.SELECTORS.X_MARK);
-                    if (optionContainer && radio && xMark) {
-                        if (this.state.disabledOptions.has(index + 1)) {
-                            optionContainer.classList.add(Quiz.CLASSES.DISABLED);
-                            radio.style.display = "none";
-                            xMark.style.display = "inline-block";
-                            radio.disabled = true;
-                        }
-                        else {
-                            optionContainer.classList.remove(Quiz.CLASSES.DISABLED);
-                            radio.disabled = false;
-                            xMark.style.display = "none";
-                            if (this.optionType === "list") {
-                                radio.style.display = "inline-block";
-                            }
-                        }
-                    }
-                });
-            }
-        }
-        // Highlight correct answer if no more attempts
-        if (oldState.status !== this.state.status && this.state.status === Quiz.CLASSES.WRONG) {
-            this.correctOptions.forEach(correctIndex => {
-                const optionContainer = this.element.querySelector(Quiz.SELECTORS.OPTION_CONTAINER(correctIndex));
-                if (optionContainer) {
-                    optionContainer.classList.add("correct-answer");
-                    // Hide X mark for correct answer when revealed
-                    this.setState({ answerRevealed: true });
-                    const xMark = optionContainer.querySelector(Quiz.SELECTORS.X_MARK);
-                    if (xMark) {
-                        xMark.style.display = "none";
-                    }
-                }
-            });
-        }
-        // if quizz status is correct || wrong
-        if (oldState.status !== this.state.status && this.state.status !== "un-attempt") {
-            const restButton = this.element.querySelector(Quiz.SELECTORS.RESET_BUTTON);
-            if (restButton) {
-                restButton.style.display = "none";
-            }
-        }
-        //  show thhe hint
-        if (oldState.showHint !== this.state.showHint) {
-            const hintElement = this.element.querySelector(Quiz.SELECTORS.QUIZ_HINT);
-            if (hintElement && this.state.showHint) {
-                hintElement.innerText = this.state.hint;
-                hintElement.style.display = "block";
-            }
-            else {
-                hintElement.innerHTML = "";
-                hintElement.style.display = "none";
-            }
-        }
+        this.renderExplanationButton();
+        // Set up reactive subscriptions
+        this.subscribe('showSubmit', (value) => this.onShowSubmitChange(value));
+        this.subscribe('showExplanation', (value) => this.onShowExplanationChange(value));
+        this.subscribe("selectedOptions", (value) => this.onSelectedOptionsChange(value));
+        this.subscribe("isAnswerRevealed", (value) => this.onIsAnswerReaveledChange(value));
+        this.subscribe("disabledOptions", (value) => this.onDisabledOptionsChange(value));
+        this.subscribe("status", (value) => this.onStatusChange(value));
+        this.subscribe("showHint", (value) => this.onShowHintChange(value));
     }
     renderQuestions() {
         let questionElement = document.createElement("div");
-        questionElement.classList.add("quiz_question");
-        questionElement = Content.CombineELements(questionElement, ...this.questionElements);
+        questionElement.classList.add(Quiz.SELECTORS.QUESTION);
+        questionElement = Content.CombineELements(questionElement, ...this.state.questionElements);
         this.element.appendChild(questionElement);
     }
     renderOptions() {
-        const existingOptionsElement = document.querySelector(Quiz.SELECTORS.OPTIONS);
+        const existingOptionsElement = this.element.querySelector(`.${Quiz.SELECTORS.OPTIONS}`);
         if (existingOptionsElement) {
             this.element.removeChild(existingOptionsElement);
         }
         let optionsElement = document.createElement("div");
-        optionsElement.classList.add("quiz_options");
-        optionsElement.setAttribute(`data-type`, this.optionType);
+        optionsElement.classList.add(Quiz.SELECTORS.OPTIONS);
+        optionsElement.setAttribute(`data-type`, this.state.optionType);
         let isCompleted = this.state.status === "completed";
-        this.options.forEach((ele, index) => {
+        this.state.optionsElements.forEach((ele, index) => {
             const optionContainer = document.createElement("div");
             optionContainer.classList.add(`option_container`, `option_container_${index + 1}`);
             const radio = document.createElement("input");
-            radio.type = this.isMultipleSelection ? "checkbox" : "radio";
+            radio.type = this.state.isMultipleSelection ? "checkbox" : "radio";
             radio.name = `quiz_${this.id}_option`;
             radio.id = `quiz_${this.id}_option_${index + 1}`;
             radio.classList.add("option_input");
@@ -26912,7 +26823,7 @@ class Quiz {
             radio.disabled = isCompleted;
             // Create X mark element (initially hidden)
             const xMark = document.createElement("span");
-            xMark.classList.add("x-mark");
+            xMark.classList.add(Quiz.SELECTORS.X_MARK);
             xMark.innerHTML = "✕"; // Unicode X symbol
             xMark.style.display = "none";
             const label = document.createElement("label");
@@ -26921,11 +26832,11 @@ class Quiz {
             const optionElement = ele.getElement();
             optionElement.classList.add(`option`, `option_${index + 1}`);
             if (isCompleted) {
-                if (this.correctOptions.includes(index + 1)) {
-                    optionContainer.classList.add(Quiz.CLASSES.SELECTED);
+                if (this.state.correctOptions.includes(index + 1)) {
+                    optionContainer.classList.add("selected");
                 }
                 else {
-                    optionContainer.classList.add(Quiz.CLASSES.DISABLED);
+                    optionContainer.classList.add("disabled");
                 }
             }
             else {
@@ -26949,21 +26860,21 @@ class Quiz {
     renderExplanationButton() {
         const explanationButton = document.createElement("button");
         explanationButton.textContent = "Show Explanation";
-        explanationButton.classList.add("quiz_explanation_button");
+        explanationButton.classList.add(Quiz.SELECTORS.EXPLANATION_BUTTON);
         explanationButton.addEventListener("click", () => this.toggleExplanation());
         const quiz_footer = this.getQuizzFooter();
         quiz_footer.appendChild(explanationButton);
     }
     renderExplanation() {
         const explanationContent = document.createElement("div");
-        explanationContent.classList.add("quiz_explanation_content");
+        explanationContent.classList.add(Quiz.SELECTORS.EXPLANATION_CONTENT);
         explanationContent.style.display = this.state.isExplanationViewed ? "block" : "none";
-        this.explanationElements.forEach((element) => element.appendTo(explanationContent));
+        this.state.explanationElements.forEach((element) => element.appendTo(explanationContent));
         this.element.appendChild(explanationContent);
     }
     renderHint() {
         const hintElement = document.createElement("div");
-        hintElement.classList.add("quiz_hint");
+        hintElement.classList.add(Quiz.SELECTORS.HINT);
         hintElement.style.display = this.state.showHint ? "block" : "none";
         this.element.appendChild(hintElement);
     }
@@ -26972,14 +26883,14 @@ class Quiz {
         submitButton.textContent = "Check";
         const quiz_footer = this.getQuizzFooter();
         submitButton.style.display = this.state.showSubmit ? "block" : "none";
-        submitButton.classList.add("quiz_submit");
+        submitButton.classList.add(Quiz.SELECTORS.SUBMIT);
         submitButton.addEventListener("click", () => this.onSubmit());
         quiz_footer.appendChild(submitButton);
     }
     renderResetButton() {
         const resetButton = document.createElement("button");
-        resetButton.textContent = "Start fresh";
-        resetButton.classList.add("quiz_reset");
+        resetButton.textContent = "Reset";
+        resetButton.classList.add(Quiz.SELECTORS.RESET_BUTTON);
         resetButton.addEventListener("click", () => this.resetQuiz());
         const quiz_footer = this.getQuizzFooter();
         quiz_footer.appendChild(resetButton);
@@ -26988,28 +26899,147 @@ class Quiz {
         this.setState({
             isExplanationViewed: true,
             showSubmit: false,
-            isExplanationVisible: !this.state.isExplanationVisible
+            showExplanation: !this.state.showExplanation
         });
-        this.emit("explanationToggle", this.state.isExplanationVisible);
+        this.emit("explanationToggle", this.state.showExplanation);
     }
     resetQuiz() {
         this.setState({
             showSubmit: true,
-            isExplanationVisible: false,
+            showExplanation: false,
             isExplanationViewed: false,
             showHint: false,
             selectedOptions: new Set(),
             status: 'un-attempt',
             hint: "",
             disabledOptions: new Set(),
-            answerRevealed: false,
+            isAnswerRevealed: false,
         });
+    }
+    onShowSubmitChange(showSubmit) {
+        const submitButton = this.element.querySelector(`.${Quiz.SELECTORS.SUBMIT}`);
+        if (submitButton) {
+            submitButton.style.display = showSubmit ? "display" : "none";
+        }
+    }
+    onShowExplanationChange(isExplanationViewed) {
+        const explanationButton = this.element.querySelector(`.${Quiz.SELECTORS.EXPLANATION_BUTTON}`);
+        const explanationContent = this.element.querySelector(`.${Quiz.SELECTORS.EXPLANATION_CONTENT}`);
+        if (isExplanationViewed) {
+            explanationButton.textContent = "Hide Explanation";
+            explanationContent.style.display = "block";
+        }
+        else {
+            explanationButton.textContent = "Show Explanation";
+            explanationContent.style.display = "none";
+        }
+    }
+    onSelectedOptionsChange(selectedOptions) {
+        const optionsElement = this.element.querySelector(`.${Quiz.SELECTORS.OPTIONS}`);
+        if (this.state.isAnswerRevealed)
+            return;
+        if (this.state.status === "correct" || this.state.status === "completed")
+            return;
+        if (optionsElement) {
+            this.state.optionsElements.forEach((_, index) => {
+                const optionElement = optionsElement.querySelector(`.${Quiz.SELECTORS.OPTION(index + 1)}`);
+                const optionContainer = optionsElement.querySelector(`.${Quiz.SELECTORS.OPTION_CONTAINER(index + 1)}`);
+                if (optionContainer && optionElement) {
+                    if (selectedOptions.has(index + 1)) {
+                        optionElement.classList.add("selected");
+                        optionContainer.classList.add("selected");
+                    }
+                    else {
+                        optionElement.classList.remove("selected");
+                        optionContainer.classList.remove("selected");
+                    }
+                }
+            });
+        }
+    }
+    onIsAnswerReaveledChange(isAnswerRevealed) {
+        const optionsElement = this.element.querySelector(`.${Quiz.SELECTORS.OPTIONS}`);
+        if (optionsElement) {
+            (this.state.optionsElements || []).map((_, index) => {
+                const optionElement = optionsElement.querySelector(`.${Quiz.SELECTORS.OPTION(index + 1)}`);
+                const optionContainer = optionsElement.querySelector(`.${Quiz.SELECTORS.OPTION_CONTAINER(index + 1)}`);
+                if (optionContainer && optionElement) {
+                    optionElement.classList.remove("selected");
+                    optionContainer.classList.remove("selected");
+                }
+            });
+        }
+    }
+    onDisabledOptionsChange(disabledOptions) {
+        const optionsElement = this.element.querySelector(`.${Quiz.SELECTORS.OPTIONS}`);
+        if (optionsElement) {
+            this.state.optionsElements.forEach((_, index) => {
+                const optionContainer = optionsElement.querySelector(`.${Quiz.SELECTORS.OPTION_CONTAINER(index + 1)}`);
+                const radio = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector('input');
+                const xMark = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector(`${Quiz.SELECTORS.X_MARK}`);
+                if (optionContainer && radio && xMark) {
+                    if (this.state.disabledOptions.has(index + 1)) {
+                        optionContainer.classList.add("disabled");
+                        radio.style.display = "none";
+                        xMark.style.display = "inline-block";
+                        radio.disabled = true;
+                    }
+                    else {
+                        optionContainer.classList.remove("disabled");
+                        radio.disabled = false;
+                        xMark.style.display = "none";
+                        if (this.state.optionType === "list") {
+                            radio.style.display = "inline-block";
+                        }
+                    }
+                }
+            });
+        }
+    }
+    onStatusChange(status) {
+        const quiz = this.element.closest(`.${Quiz.SELECTORS.QUIZ}`);
+        if (quiz) {
+            quiz.setAttribute("data-status", this.state.status);
+        }
+        // Highlight correct answer if no more attempts
+        if (status === "wrong") {
+            this.state.correctOptions.forEach(correctIndex => {
+                const optionContainer = this.element.querySelector(`.${Quiz.SELECTORS.OPTION_CONTAINER(correctIndex)}`);
+                if (optionContainer) {
+                    optionContainer.classList.add("correct-answer");
+                    // Hide X mark for correct answer when revealed
+                    this.setState({ isAnswerRevealed: true });
+                    const xMark = optionContainer.querySelector(`.${Quiz.SELECTORS.X_MARK}`);
+                    if (xMark) {
+                        xMark.style.display = "none";
+                    }
+                }
+            });
+        }
+        // if quizz status is correct || wrong
+        if (status !== "un-attempt") {
+            const restButton = this.element.querySelector(`.${Quiz.SELECTORS.RESET_BUTTON}`);
+            if (restButton) {
+                restButton.style.display = "none";
+            }
+        }
+    }
+    onShowHintChange(showHint) {
+        const hintElement = this.element.querySelector(`.${Quiz.SELECTORS.HINT}`);
+        if (hintElement && showHint) {
+            hintElement.innerText = this.state.hint;
+            hintElement.style.display = "block";
+        }
+        else {
+            hintElement.innerHTML = "";
+            hintElement.style.display = "none";
+        }
     }
     setupQuizClickHandler() {
         this.element.addEventListener('click', (event) => {
             const target = event.target;
             // Don't trigger if clicking on or within these elements
-            const isInteractiveElement = target.closest(Quiz.SELECTORS.SUBMIT_BUTTON);
+            const isInteractiveElement = target.closest(`.${Quiz.SELECTORS.SUBMIT}`);
             if (!isInteractiveElement) {
                 this.hideHint();
             }
@@ -27020,7 +27050,7 @@ class Quiz {
             return;
         }
         const newSelectedOptions = new Set(this.state.selectedOptions);
-        if (this.isMultipleSelection) {
+        if (this.state.isMultipleSelection) {
             if (newSelectedOptions.has(clickedIndex)) {
                 newSelectedOptions.delete(clickedIndex);
             }
@@ -27056,7 +27086,7 @@ class Quiz {
     }
     checkAnswer() {
         const selectedArray = Array.from(this.state.selectedOptions).sort();
-        const correctArray = [...this.correctOptions].sort();
+        const correctArray = [...this.state.correctOptions].sort();
         const isCorrect = this.arraysEqual(selectedArray, correctArray);
         if (!isCorrect) {
             // Disable wrong options
@@ -27067,7 +27097,7 @@ class Quiz {
                     disabledOptions: newDisabledOptions,
                 });
             });
-            const remainingValidOptions = this.options.length - this.state.disabledOptions.size;
+            const remainingValidOptions = this.state.optionsElements.length - this.state.disabledOptions.size;
             // If only one valid option remains, it must be correct, so show it
             if (remainingValidOptions <= 1) {
                 this.setState({
@@ -27085,17 +27115,6 @@ class Quiz {
         return arr1.length === arr2.length &&
             arr1.every((value, index) => value === arr2[index]);
     }
-    emit(eventName, data) {
-        if (this.callbacks[eventName]) {
-            this.callbacks[eventName].forEach((callback) => callback(data));
-        }
-    }
-    on(eventName, callback) {
-        if (!this.callbacks[eventName]) {
-            this.callbacks[eventName] = [];
-        }
-        this.callbacks[eventName].push(callback);
-    }
     getElement() {
         return this.element;
     }
@@ -27103,7 +27122,7 @@ class Quiz {
         const quiz = document.createElement("div");
         quiz.classList.add("quiz");
         quiz.setAttribute("data-status", this.state.status);
-        quiz.setAttribute('data-type', this.isMultipleSelection ? "multiple" : "single");
+        quiz.setAttribute('data-type', this.state.isMultipleSelection ? "multiple" : "single");
         this.element.classList.add("quiz_container");
         quiz.appendChild(this.element);
         this.element.id = this.id;
@@ -27111,39 +27130,31 @@ class Quiz {
     }
     getSubElements() {
         return [
-            ...this.questionElements,
-            ...this.options,
-            ...this.explanationElements,
+            ...this.state.questionElements,
+            ...this.state.optionsElements,
+            ...this.state.explanationElements,
         ];
     }
 }
 Quiz.SELECTORS = {
-    QUIZ: '.quiz',
-    SUBMIT_BUTTON: '.quiz_submit',
-    OPTIONS: '.quiz_options',
-    OPTION: (index) => `.option_${index}`,
-    OPTION_CONTAINER: (index) => `.option_container_${index}`,
-    EXPLANATION_BUTTON: '.quiz_explanation_button',
-    EXPLANTION_CONTENT: ".quiz_explanation_content",
-    X_MARK: ".x-mark",
-    RESET_BUTTON: ".quiz_reset",
-    QUIZ_HINT: ".quiz_hint"
+    QUIZ: "quiz",
+    QUESTION: "quiz_question",
+    SUBMIT: "quiz_submit",
+    OPTIONS: "quiz_options",
+    OPTION: (index) => `option_${index}`,
+    OPTION_CONTAINER: (index) => `option_container_${index}`,
+    X_MARK: "x-mark",
+    EXPLANATION_BUTTON: "quiz_explanation_button",
+    EXPLANATION_CONTENT: "quiz_explanation_content",
+    RESET_BUTTON: "quiz_reset",
+    HINT: "quiz_hint"
 };
-Quiz.CLASSES = {
-    SELECTED: 'selected',
-    DISABLED: 'disabled',
-    CORRECT: 'correct',
-    WRONG: 'wrong',
-    ACTIVE: 'active',
-    HIDDEN: 'hidden',
-    COMPLETED: 'completed'
-};
-class InputQuiz {
+class InputQuiz extends ReactiveElement {
     constructor(inputType, questionElements, explanationElements = []) {
+        super();
         this.inputType = inputType;
         this.id = "";
         this.type = "input_quiz";
-        this.subscribers = new Map();
         this.element = document.createElement("div");
         this.state = this.createState({
             questionElements,
@@ -27164,30 +27175,6 @@ class InputQuiz {
             // Don't trigger if clicking on or within these elements
             target.closest(InputQuiz.SELECTORS.SUBMIT_BUTTON);
         });
-    }
-    createState(initialState) {
-        return new Proxy(initialState, {
-            set: (target, property, value) => {
-                var _a;
-                const oldValue = target[property];
-                target[property] = value;
-                if (oldValue !== value && this.subscribers.has(property)) {
-                    (_a = this.subscribers.get(property)) === null || _a === void 0 ? void 0 : _a.forEach(callback => callback(value));
-                }
-                return true;
-            }
-        });
-    }
-    subscribe(property, callback) {
-        var _a;
-        if (!this.subscribers.has(property)) {
-            this.subscribers.set(property, new Set());
-        }
-        (_a = this.subscribers.get(property)) === null || _a === void 0 ? void 0 : _a.add(callback);
-    }
-    unsubscribe(property, callback) {
-        var _a;
-        (_a = this.subscribers.get(property)) === null || _a === void 0 ? void 0 : _a.delete(callback);
     }
     initQuiz() {
         this.renderQuestion(this.state.questionElements);
@@ -27230,7 +27217,7 @@ class InputQuiz {
         });
         explanationContent.classList.add(InputQuiz.SELECTORS.EXPLANATION_CONTENT);
         explanationContent.style.display = "none";
-        this.state.explanationElements.forEach(element => element.appendTo(explanationContent));
+        this.state.explanationElements.forEach((element) => element.appendTo(explanationContent));
         this.element.appendChild(explanationButton);
         this.element.appendChild(explanationContent);
     }
@@ -27260,25 +27247,11 @@ class InputQuiz {
             hintElement.innerText = value;
         }
     }
-    setState(state) {
-        Object.keys(state).forEach(key => {
-            this.state[key] = state[key];
-        });
-    }
     showHint(text) {
         this.setState({ showHint: true, hint: text });
     }
     onInputValueChange(value) {
         this.emit("onchange", value);
-    }
-    emit(eventName, data) {
-        var _a;
-        if (this.subscribers.has(eventName)) {
-            (_a = this.subscribers.get(eventName)) === null || _a === void 0 ? void 0 : _a.forEach(callback => callback(data));
-        }
-    }
-    on(eventName, callback) {
-        this.subscribe(eventName, callback);
     }
     getElement() {
         return this.element;
