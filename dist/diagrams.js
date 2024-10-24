@@ -26730,6 +26730,7 @@ class ReactiveElement {
         Object.keys(state).forEach(key => {
             this.state[key] = state[key];
         });
+        console.warn(Object.entries(this.state), "--state");
     }
     subscribe(property, callback) {
         var _a;
@@ -26785,8 +26786,8 @@ class Quiz extends ReactiveElement {
         this.renderHint();
         this.renderExplanation();
         this.renderSubmitButton();
-        this.renderResetButton();
         this.renderExplanationButton();
+        this.renderResetButton();
         // Set up reactive subscriptions
         this.subscribe('showSubmit', (value) => this.onShowSubmitChange(value));
         this.subscribe('showExplanation', (value) => this.onShowExplanationChange(value));
@@ -26847,6 +26848,11 @@ class Quiz extends ReactiveElement {
                         handleClick();
                     }
                 });
+                radio.addEventListener('change', () => {
+                    if (!this.state.disabledOptions.has(index + 1)) {
+                        handleClick();
+                    }
+                });
             }
             label.appendChild(radio);
             label.appendChild(xMark);
@@ -26891,7 +26897,20 @@ class Quiz extends ReactiveElement {
         const resetButton = document.createElement("button");
         resetButton.textContent = "Reset";
         resetButton.classList.add(Quiz.SELECTORS.RESET_BUTTON);
-        resetButton.addEventListener("click", () => this.resetQuiz());
+        resetButton.addEventListener("click", () => {
+            this.setState({
+                showSubmit: true,
+                showExplanation: false,
+                isExplanationViewed: false,
+                selectedOptions: new Set(),
+                status: 'un-attempt',
+                disabledOptions: new Set(),
+                isAnswerRevealed: false,
+                showHint: false,
+                hint: ""
+            });
+            this.clearDisableOptions();
+        });
         const quiz_footer = this.getQuizzFooter();
         quiz_footer.appendChild(resetButton);
     }
@@ -26903,18 +26922,22 @@ class Quiz extends ReactiveElement {
         });
         this.emit("explanationToggle", this.state.showExplanation);
     }
-    resetQuiz() {
-        this.setState({
-            showSubmit: true,
-            showExplanation: false,
-            isExplanationViewed: false,
-            showHint: false,
-            selectedOptions: new Set(),
-            status: 'un-attempt',
-            hint: "",
-            disabledOptions: new Set(),
-            isAnswerRevealed: false,
-        });
+    clearDisableOptions() {
+        const optionsElement = this.element.querySelector(`.${Quiz.SELECTORS.OPTIONS}`);
+        if (optionsElement) {
+            this.state.optionsElements.forEach((_, index) => {
+                const optionContainer = optionsElement.querySelector(`.${Quiz.SELECTORS.OPTION_CONTAINER(index + 1)}`);
+                const radio = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector('input');
+                const xMark = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector(`.${Quiz.SELECTORS.X_MARK}`);
+                if (optionContainer && radio && xMark) {
+                    optionContainer.classList.remove("disabled");
+                    radio.style.display = "inline-block";
+                    radio.checked = false;
+                    xMark.style.display = "none";
+                    radio.disabled = true;
+                }
+            });
+        }
     }
     onShowSubmitChange(showSubmit) {
         const submitButton = this.element.querySelector(`.${Quiz.SELECTORS.SUBMIT}`);
@@ -26976,21 +26999,13 @@ class Quiz extends ReactiveElement {
             this.state.optionsElements.forEach((_, index) => {
                 const optionContainer = optionsElement.querySelector(`.${Quiz.SELECTORS.OPTION_CONTAINER(index + 1)}`);
                 const radio = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector('input');
-                const xMark = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector(`${Quiz.SELECTORS.X_MARK}`);
+                const xMark = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector(`.${Quiz.SELECTORS.X_MARK}`);
                 if (optionContainer && radio && xMark) {
-                    if (this.state.disabledOptions.has(index + 1)) {
+                    if (disabledOptions.has(index + 1)) {
                         optionContainer.classList.add("disabled");
                         radio.style.display = "none";
                         xMark.style.display = "inline-block";
                         radio.disabled = true;
-                    }
-                    else {
-                        optionContainer.classList.remove("disabled");
-                        radio.disabled = false;
-                        xMark.style.display = "none";
-                        if (this.state.optionType === "list") {
-                            radio.style.display = "inline-block";
-                        }
                     }
                 }
             });

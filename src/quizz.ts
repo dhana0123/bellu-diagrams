@@ -22,6 +22,8 @@ export abstract class ReactiveElement<TState extends object> {
         Object.keys(state).forEach(key => {
             this.state[key as K] = state[key as K];
         });
+
+        console.warn(Object.entries(this.state), "--state")
     }
 
     subscribe(property: string, callback: (value: any) => void) {
@@ -124,8 +126,8 @@ export class Quiz extends ReactiveElement<QuizState> implements ContentElement {
         this.renderHint();
         this.renderExplanation();
         this.renderSubmitButton();
-        this.renderResetButton();
         this.renderExplanationButton();
+        this.renderResetButton();
 
         // Set up reactive subscriptions
         this.subscribe('showSubmit', (value) => this.onShowSubmitChange(value));
@@ -196,6 +198,11 @@ export class Quiz extends ReactiveElement<QuizState> implements ContentElement {
                         handleClick();
                     }
                 });
+                radio.addEventListener('change', () => {
+                    if (!this.state.disabledOptions.has(index + 1)) {
+                        handleClick();
+                    }
+                });
             }
 
             label.appendChild(radio);
@@ -250,7 +257,21 @@ export class Quiz extends ReactiveElement<QuizState> implements ContentElement {
         const resetButton = document.createElement("button");
         resetButton.textContent = "Reset";
         resetButton.classList.add(Quiz.SELECTORS.RESET_BUTTON);
-        resetButton.addEventListener("click", () => this.resetQuiz());
+
+        resetButton.addEventListener("click", () => {
+            this.setState({
+                showSubmit: true,
+                showExplanation: false,
+                isExplanationViewed: false,
+                selectedOptions: new Set<number>(),
+                status: 'un-attempt',
+                disabledOptions: new Set<number>(),
+                isAnswerRevealed: false,
+                showHint: false,
+                hint: ""
+            });
+            this.clearDisableOptions()
+        });
 
         const quiz_footer = this.getQuizzFooter();
         quiz_footer.appendChild(resetButton);
@@ -267,18 +288,26 @@ export class Quiz extends ReactiveElement<QuizState> implements ContentElement {
         this.emit("explanationToggle", this.state.showExplanation);
     }
 
-    private resetQuiz() {
-        this.setState({
-            showSubmit: true,
-            showExplanation: false,
-            isExplanationViewed: false,
-            showHint: false,
-            selectedOptions: new Set(),
-            status: 'un-attempt',
-            hint: "",
-            disabledOptions: new Set(),
-            isAnswerRevealed: false,
-        });
+    private clearDisableOptions() {
+        const optionsElement = this.element.querySelector(`.${Quiz.SELECTORS.OPTIONS}`);
+        if (optionsElement) {
+            this.state.optionsElements.forEach((_, index) => {
+                const optionContainer = optionsElement.querySelector(
+                    `.${Quiz.SELECTORS.OPTION_CONTAINER(index + 1)}`
+                );
+                const radio = optionContainer?.querySelector('input');
+                const xMark = optionContainer?.querySelector(`.${Quiz.SELECTORS.X_MARK}`) as HTMLDivElement;
+
+                if (optionContainer && radio && xMark) {
+                    optionContainer.classList.remove("disabled");
+                    radio.style.display = "inline-block";
+                    radio.checked = false
+                    xMark.style.display = "none";
+                    radio.disabled = true;
+
+                }
+            });
+        }
     }
 
     private onShowSubmitChange(showSubmit: boolean) {
@@ -358,21 +387,14 @@ export class Quiz extends ReactiveElement<QuizState> implements ContentElement {
                     `.${Quiz.SELECTORS.OPTION_CONTAINER(index + 1)}`
                 );
                 const radio = optionContainer?.querySelector('input');
-                const xMark = optionContainer?.querySelector(`${Quiz.SELECTORS.X_MARK}`) as HTMLDivElement;
+                const xMark = optionContainer?.querySelector(`.${Quiz.SELECTORS.X_MARK}`) as HTMLDivElement;
 
                 if (optionContainer && radio && xMark) {
-                    if (this.state.disabledOptions.has(index + 1)) {
+                    if (disabledOptions.has(index + 1)) {
                         optionContainer.classList.add("disabled");
                         radio.style.display = "none";
                         xMark.style.display = "inline-block";
                         radio.disabled = true;
-                    } else {
-                        optionContainer.classList.remove("disabled");
-                        radio.disabled = false;
-                        xMark.style.display = "none"
-                        if (this.state.optionType === "list") {
-                            radio.style.display = "inline-block"
-                        }
                     }
                 }
             });
@@ -484,6 +506,7 @@ export class Quiz extends ReactiveElement<QuizState> implements ContentElement {
         const selectedArray = Array.from(this.state.selectedOptions).sort();
         const correctArray = [...this.state.correctOptions].sort();
         const isCorrect = this.arraysEqual(selectedArray, correctArray);
+
 
         if (!isCorrect) {
             // Disable wrong options

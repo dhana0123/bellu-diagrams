@@ -981,7 +981,7 @@ declare class Quiz extends ReactiveElement<QuizState> implements ContentElement 
     private renderSubmitButton;
     private renderResetButton;
     private toggleExplanation;
-    private resetQuiz;
+    private clearDisableOptions;
     private onShowSubmitChange;
     private onShowExplanationChange;
     private onSelectedOptionsChange;
