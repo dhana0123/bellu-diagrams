@@ -56,7 +56,7 @@ interface QuizState {
     selectedOptions: Set<number>;
     correctOptions: number[];
     optionType: OptionType;
-    status: "un-attempt" | "correct" | "wrong" | "completed";
+    status: "un-attempt" | "correct" | "wrong" | "completed" | "viewed";
     disabledOptions: Set<number>;
     isAnswerRevealed: boolean;
     showHint: boolean;
@@ -134,6 +134,7 @@ export class Quiz extends ReactiveElement<QuizState> implements ContentElement {
         this.subscribe('showExplanation', (value) => this.onShowExplanationChange(value));
         this.subscribe("selectedOptions", (value) => this.onSelectedOptionsChange(value))
         this.subscribe("isAnswerRevealed", (value) => this.onIsAnswerReaveledChange(value))
+        this.subscribe("isExplanationViewed", (value) => this.onIsExplanationViewed(value))
         this.subscribe("disabledOptions", (value) => this.onDisabledOptionsChange(value));
         this.subscribe("status", (value) => this.onStatusChange(value));
         this.subscribe("showHint", (value) => this.onShowHintChange(value))
@@ -249,7 +250,13 @@ export class Quiz extends ReactiveElement<QuizState> implements ContentElement {
         const quiz_footer = this.getQuizzFooter();
         submitButton.style.display = this.state.showSubmit ? "block" : "none";
         submitButton.classList.add(Quiz.SELECTORS.SUBMIT);
-        submitButton.addEventListener("click", () => this.onSubmit());
+
+        submitButton.addEventListener("click", () => {
+            const selectedArray = Array.from(this.state.selectedOptions);
+            const isCorrect = this.checkAnswer()
+            this.emit("submit", { isCorrect, selectedArray });
+        });
+
         quiz_footer.appendChild(submitButton);
     }
 
@@ -279,12 +286,18 @@ export class Quiz extends ReactiveElement<QuizState> implements ContentElement {
 
 
     private toggleExplanation() {
-        this.setState({
-            isExplanationViewed: true,
-            showSubmit: false,
-            showExplanation: !this.state.showExplanation
-        });
-
+        if (this.state.status !== "correct" && !this.state.isExplanationViewed) {
+            this.setState({
+                status: "viewed",
+                isExplanationViewed: true,
+                showSubmit: false,
+                showExplanation: !this.state.showExplanation
+            });
+        } else {
+            this.setState({
+                showExplanation: !this.state.showExplanation
+            })
+        }
         this.emit("explanationToggle", this.state.showExplanation);
     }
 
@@ -305,6 +318,30 @@ export class Quiz extends ReactiveElement<QuizState> implements ContentElement {
                     xMark.style.display = "none";
                     radio.disabled = true;
 
+                }
+            });
+        }
+    }
+
+    private onIsExplanationViewed(isExplanationViewed: boolean) {
+        const optionsElement = this.element.querySelector(`.${Quiz.SELECTORS.OPTIONS}`);
+        if (optionsElement && isExplanationViewed) {
+            this.state.optionsElements.forEach((_, index) => {
+                const optionContainer = optionsElement.querySelector(
+                    `.${Quiz.SELECTORS.OPTION_CONTAINER(index + 1)}`
+                );
+                const radio = optionContainer?.querySelector('input');
+                const xMark = optionContainer?.querySelector(`.${Quiz.SELECTORS.X_MARK}`) as HTMLDivElement;
+
+                if (optionContainer && radio && xMark) {
+                    if (this.state.correctOptions.includes(index + 1)) {
+                        optionContainer.classList.add("selected")
+                    } else {
+                        optionContainer.classList.remove("selected");
+                    }
+                    radio.style.display = "none";
+                    xMark.style.display = "none";
+                    radio.disabled = true;
                 }
             });
         }
@@ -337,7 +374,7 @@ export class Quiz extends ReactiveElement<QuizState> implements ContentElement {
     private onSelectedOptionsChange(selectedOptions: Set<number>) {
         const optionsElement = this.element.querySelector(`.${Quiz.SELECTORS.OPTIONS}`);
 
-        if (this.state.isAnswerRevealed) return
+        if (this.state.isExplanationViewed) return
         if (this.state.status === "correct" || this.state.status === "completed") return
 
         if (optionsElement) {
@@ -436,7 +473,7 @@ export class Quiz extends ReactiveElement<QuizState> implements ContentElement {
         const hintElement = this.element.querySelector(`.${Quiz.SELECTORS.HINT}`) as HTMLDivElement;
         if (hintElement && showHint) {
             hintElement.innerText = this.state.hint;
-            hintElement.style.display = "block"
+            hintElement.style.display = "block";
         } else {
             hintElement.innerHTML = "";
             hintElement.style.display = "none"
@@ -488,18 +525,15 @@ export class Quiz extends ReactiveElement<QuizState> implements ContentElement {
         return this.quiz_footer;
     }
 
-    private onSubmit() {
-        const selectedArray = Array.from(this.state.selectedOptions);
-        const isCorrect = this.checkAnswer()
-        this.emit("submit", { isCorrect, selectedArray });
-    }
-
     public showHint(hintText: string) {
-        this.setState({ showHint: true, hint: hintText })
+        // NOTE: HERE ORDER IS IMPORTANT HINT, SHOWHINT
+        // BECAUSE setState updainting in squece
+        // Feature: batch updated functionality need to implement
+        this.setState({ hint: hintText, showHint: true })
     }
 
     public hideHint() {
-        this.setState({ showHint: false, hint: "" })
+        this.setState({ showHint: false, hint: "", })
     }
 
     public checkAnswer(): boolean {
@@ -705,6 +739,7 @@ export class InputQuiz extends ReactiveElement<InputState> implements ContentEle
     private onShowHintChange(showHint: boolean) {
         const hintElement = this.element.querySelector(`.${InputQuiz.SELECTORS.HINT}`) as HTMLDivElement;
         if (hintElement && showHint) {
+            hintElement.innerText = this.state.hint;
             hintElement.style.display = showHint ? "block" : "none"
         }
     }

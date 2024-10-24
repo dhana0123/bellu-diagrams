@@ -955,7 +955,7 @@ interface QuizState {
     selectedOptions: Set<number>;
     correctOptions: number[];
     optionType: OptionType;
-    status: "un-attempt" | "correct" | "wrong" | "completed";
+    status: "un-attempt" | "correct" | "wrong" | "completed" | "viewed";
     disabledOptions: Set<number>;
     isAnswerRevealed: boolean;
     showHint: boolean;
@@ -982,6 +982,7 @@ declare class Quiz extends ReactiveElement<QuizState> implements ContentElement 
     private renderResetButton;
     private toggleExplanation;
     private clearDisableOptions;
+    private onIsExplanationViewed;
     private onShowSubmitChange;
     private onShowExplanationChange;
     private onSelectedOptionsChange;
@@ -992,7 +993,6 @@ declare class Quiz extends ReactiveElement<QuizState> implements ContentElement 
     private setupQuizClickHandler;
     private onOptionClick;
     private getQuizzFooter;
-    private onSubmit;
     showHint(hintText: string): void;
     hideHint(): void;
     checkAnswer(): boolean;

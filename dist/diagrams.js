@@ -26793,6 +26793,7 @@ class Quiz extends ReactiveElement {
         this.subscribe('showExplanation', (value) => this.onShowExplanationChange(value));
         this.subscribe("selectedOptions", (value) => this.onSelectedOptionsChange(value));
         this.subscribe("isAnswerRevealed", (value) => this.onIsAnswerReaveledChange(value));
+        this.subscribe("isExplanationViewed", (value) => this.onIsExplanationViewed(value));
         this.subscribe("disabledOptions", (value) => this.onDisabledOptionsChange(value));
         this.subscribe("status", (value) => this.onStatusChange(value));
         this.subscribe("showHint", (value) => this.onShowHintChange(value));
@@ -26890,7 +26891,11 @@ class Quiz extends ReactiveElement {
         const quiz_footer = this.getQuizzFooter();
         submitButton.style.display = this.state.showSubmit ? "block" : "none";
         submitButton.classList.add(Quiz.SELECTORS.SUBMIT);
-        submitButton.addEventListener("click", () => this.onSubmit());
+        submitButton.addEventListener("click", () => {
+            const selectedArray = Array.from(this.state.selectedOptions);
+            const isCorrect = this.checkAnswer();
+            this.emit("submit", { isCorrect, selectedArray });
+        });
         quiz_footer.appendChild(submitButton);
     }
     renderResetButton() {
@@ -26915,11 +26920,19 @@ class Quiz extends ReactiveElement {
         quiz_footer.appendChild(resetButton);
     }
     toggleExplanation() {
-        this.setState({
-            isExplanationViewed: true,
-            showSubmit: false,
-            showExplanation: !this.state.showExplanation
-        });
+        if (this.state.status !== "correct" && !this.state.isExplanationViewed) {
+            this.setState({
+                status: "viewed",
+                isExplanationViewed: true,
+                showSubmit: false,
+                showExplanation: !this.state.showExplanation
+            });
+        }
+        else {
+            this.setState({
+                showExplanation: !this.state.showExplanation
+            });
+        }
         this.emit("explanationToggle", this.state.showExplanation);
     }
     clearDisableOptions() {
@@ -26933,6 +26946,27 @@ class Quiz extends ReactiveElement {
                     optionContainer.classList.remove("disabled");
                     radio.style.display = "inline-block";
                     radio.checked = false;
+                    xMark.style.display = "none";
+                    radio.disabled = true;
+                }
+            });
+        }
+    }
+    onIsExplanationViewed(isExplanationViewed) {
+        const optionsElement = this.element.querySelector(`.${Quiz.SELECTORS.OPTIONS}`);
+        if (optionsElement && isExplanationViewed) {
+            this.state.optionsElements.forEach((_, index) => {
+                const optionContainer = optionsElement.querySelector(`.${Quiz.SELECTORS.OPTION_CONTAINER(index + 1)}`);
+                const radio = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector('input');
+                const xMark = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector(`.${Quiz.SELECTORS.X_MARK}`);
+                if (optionContainer && radio && xMark) {
+                    if (this.state.correctOptions.includes(index + 1)) {
+                        optionContainer.classList.add("selected");
+                    }
+                    else {
+                        optionContainer.classList.remove("selected");
+                    }
+                    radio.style.display = "none";
                     xMark.style.display = "none";
                     radio.disabled = true;
                 }
@@ -26959,7 +26993,7 @@ class Quiz extends ReactiveElement {
     }
     onSelectedOptionsChange(selectedOptions) {
         const optionsElement = this.element.querySelector(`.${Quiz.SELECTORS.OPTIONS}`);
-        if (this.state.isAnswerRevealed)
+        if (this.state.isExplanationViewed)
             return;
         if (this.state.status === "correct" || this.state.status === "completed")
             return;
@@ -27088,16 +27122,14 @@ class Quiz extends ReactiveElement {
         }
         return this.quiz_footer;
     }
-    onSubmit() {
-        const selectedArray = Array.from(this.state.selectedOptions);
-        const isCorrect = this.checkAnswer();
-        this.emit("submit", { isCorrect, selectedArray });
-    }
     showHint(hintText) {
-        this.setState({ showHint: true, hint: hintText });
+        // NOTE: HERE ORDER IS IMPORTANT HINT, SHOWHINT
+        // BECAUSE setState updainting in squece
+        // Feature: batch updated functionality need to implement
+        this.setState({ hint: hintText, showHint: true });
     }
     hideHint() {
-        this.setState({ showHint: false, hint: "" });
+        this.setState({ showHint: false, hint: "", });
     }
     checkAnswer() {
         const selectedArray = Array.from(this.state.selectedOptions).sort();
@@ -27252,6 +27284,7 @@ class InputQuiz extends ReactiveElement {
     onShowHintChange(showHint) {
         const hintElement = this.element.querySelector(`.${InputQuiz.SELECTORS.HINT}`);
         if (hintElement && showHint) {
+            hintElement.innerText = this.state.hint;
             hintElement.style.display = showHint ? "block" : "none";
         }
     }
