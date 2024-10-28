@@ -3,3 +3,4 @@ example
 docs
 src/test/quicktest.ts
 .zed
+dist

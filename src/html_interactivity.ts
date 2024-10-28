@@ -101,17 +101,18 @@ export class Interactive {
     }
 
     public label(
-        variable_name: string, value: any,
-        display: boolean = true,
+        variable_name: string, 
+        value: any,
         color: string = 'white',
         markType: 'square' | 'circle' = 'square',
         markColor: string = '#8B5CF6',
         display_format_func: formatFunction = defaultFormat_f,
+        display: boolean = true
     ) {
 
         let containerDiv = document.createElement('div');
         containerDiv.classList.add("diagramatics-label-container");
-        containerDiv.style.display = display ? 'flex' : "none";
+        containerDiv.style.display = display ? 'flex': "none";
         containerDiv.style.alignItems = 'center';
         containerDiv.style.justifyContent = 'center'
         containerDiv.style.gap = '8px';
