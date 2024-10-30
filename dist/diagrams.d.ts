@@ -601,7 +601,7 @@ declare class Interactive {
     draw(): void;
     set(variable_name: string, val: any): void;
     get(variable_name: string): any;
-    label(variable_name: string, value: any, color?: string, markType?: 'square' | 'circle', markColor?: string, display_format_func?: formatFunction, display?: boolean): void;
+    label(variable_name: string, value: any, display_format_func?: formatFunction, color?: string, markType?: "square" | "circle", markColor?: string, display?: boolean): void;
     /**
      * WARNING: deprecated
      * use `locator_initial_draw` instead
@@ -649,7 +649,7 @@ declare class Interactive {
      * @param step step size
      * @param time time of the animation in milliseconds
      * @param display_format_func function to format the display of the value
-    */
+     */
     slider(variable_name: string, min?: number, max?: number, value?: number, step?: number, time?: number, display_format_func?: formatFunction): void;
     private init_drag_and_drop;
     /**
@@ -666,7 +666,7 @@ declare class Interactive {
      * you can also add custom region box for the target by adding `custom_region_box: [Vector2, Vector2]` in the config
      *
      * you can also add a sorting function for the target by adding `sorting_function: (a: string, b: string) => number`
-    */
+     */
     dnd_container(name: string, diagram: Diagram, capacity?: number, config?: dnd_container_config): void;
     /**
      * Create a drag and drop draggable that is positioned into an existing container
@@ -684,7 +684,7 @@ declare class Interactive {
      * @param container_diagram diagram of the container, if not provided, a container will be created automatically
      * @param callback callback function (called after the draggable is moved)
      * @param onclickstart_callback callback function (called at the start of the drag)
-    */
+     */
     dnd_draggable(name: string, diagram: Diagram, container_diagram?: Diagram, callback?: (name: string, pos: Vector2) => any, onclickstart_callback?: () => any): void;
     /**
      * Register a callback function when a draggable is dropped outside of a container
@@ -695,7 +695,7 @@ declare class Interactive {
      * Register a validation function when a draggable is moved to a container
      * If the function return false, the draggable will not be moved
      * @param fun validation function
-    */
+     */
     dnd_register_move_validation_function(fun: (draggable_name: string, target_name: string) => boolean): void;
     /**
      * Move a draggable to a container
@@ -706,7 +706,7 @@ declare class Interactive {
     /**
      * Get the data of the drag and drop objects with the format:
      * `{container:string, content:string[]}[]`
-    */
+     */
     get_dnd_data(): DragAndDropData;
     /**
      * Set the data of the drag and drop objects with the format:
@@ -714,13 +714,13 @@ declare class Interactive {
      */
     set_dnd_data(data: DragAndDropData): void;
     /**
-    * reorder the tabindex of the containers
-    * @param container_names
-    */
+     * reorder the tabindex of the containers
+     * @param container_names
+     */
     dnd_reorder_tabindex(container_names: string[]): void;
     /**
-    * Get the content size of a container
-    */
+     * Get the content size of a container
+     */
     get_dnd_container_content_size(container_name: string): [number, number];
     /**
      * Set whether the content of the container should be sorted or not
@@ -756,7 +756,7 @@ declare class Interactive {
      * @param diagram_off diagram of the button when it is off
      * @param state initial state of the button
      * @param callback callback function when the button state is changed
-    */
+     */
     button_toggle(name: string, diagram_on: Diagram, diagram_off: Diagram, state?: boolean, callback?: (name: string, state: boolean) => any): void;
     /**
      * Create a click button
@@ -764,7 +764,7 @@ declare class Interactive {
      * @param diagram diagram of the button
      * @param diagram_pressed diagram of the button when it is pressed
      * @param callback callback function when the button is clicked
-    */
+     */
     button_click(name: string, diagram: Diagram, diagram_pressed: Diagram, callback: () => any): void;
     /**
      * Create a click button
@@ -773,7 +773,7 @@ declare class Interactive {
      * @param diagram_pressed diagram of the button when it is pressed
      * @param diagram_hover diagram of the button when it is hovered
      * @param callback callback function when the button is clicked
-    */
+     */
     button_click_hover(name: string, diagram: Diagram, diagram_pressed: Diagram, diagram_hover: Diagram, callback: () => any): void;
 }
 type LocatorEvent = TouchEvent | Touch | MouseEvent;
@@ -935,71 +935,6 @@ declare class Image implements ContentElement {
     constructor(src: string, width: number, height?: number | undefined);
     appendTo(container: HTMLDivElement): void;
     getElement(): Element;
-}
-
-declare abstract class ReactiveElement<TState extends object> {
-    protected subscribers: Map<string, Set<(value: any) => void>>;
-    protected state: TState;
-    protected createState(initialState: TState): TState;
-    protected setState<K extends keyof TState>(state: Pick<TState, K>): void;
-    subscribe(property: string, callback: (value: any) => void): void;
-    unsubscribe(property: string, callback: (value: any) => void): void;
-    emit(eventName: string, data?: any): void;
-    on(eventName: string, callback: Function): void;
-}
-interface QuizState {
-    showSubmit: boolean;
-    showExplanation: boolean;
-    isExplanationViewed: boolean;
-    isMultipleSelection: boolean;
-    selectedOptions: Set<number>;
-    correctOptions: number[];
-    optionType: OptionType;
-    status: "un-attempt" | "correct" | "wrong" | "completed" | "viewed";
-    disabledOptions: Set<number>;
-    isAnswerRevealed: boolean;
-    showHint: boolean;
-    hint: string;
-    questionElements: ContentElement[];
-    explanationElements: ContentElement[];
-    optionsElements: ContentElement[];
-}
-type OptionType = "grid" | "list";
-declare class Quiz extends ReactiveElement<QuizState> implements ContentElement {
-    id: string;
-    readonly type: string;
-    element: Element;
-    private quiz_footer;
-    constructor(status: QuizState['status'], optionType: OptionType, questionElements: ContentElement[], optionsElements: ContentElement[], isMultipleSelection?: boolean, explanationElements?: ContentElement[], correctOptions?: number[]);
-    private static readonly SELECTORS;
-    private initQuizz;
-    private renderQuestions;
-    private renderOptions;
-    private renderExplanationButton;
-    private renderExplanation;
-    private renderHint;
-    private renderSubmitButton;
-    private renderResetButton;
-    private toggleExplanation;
-    private clearDisableOptions;
-    private onIsExplanationViewed;
-    private onShowSubmitChange;
-    private onShowExplanationChange;
-    private onSelectedOptionsChange;
-    private onIsAnswerReaveledChange;
-    private onDisabledOptionsChange;
-    private onStatusChange;
-    private onShowHintChange;
-    private setupQuizClickHandler;
-    private onOptionClick;
-    private getQuizzFooter;
-    showHint(hintText: string): void;
-    hideHint(): void;
-    checkAnswer(): boolean;
-    private arraysEqual;
-    getElement(): Element;
-    appendTo(container: HTMLDivElement): void;
-    getSubElements(): ContentElement[];
 }
 
 /**
@@ -1992,4 +1927,4 @@ declare namespace encoding {
   export { encoding_decode as decode, encoding_encode as encode };
 }
 
-export { Banner, Content, Diagram, Drawing, Header, Image, Interactive, Markup, Paragraph, Path, Quiz, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, type axes_options, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, type draw_to_svg_options, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
+export { Banner, Content, Diagram, Drawing, Header, Image, Interactive, Markup, Paragraph, Path, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, type axes_options, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, type draw_to_svg_options, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };

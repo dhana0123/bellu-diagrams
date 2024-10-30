@@ -4,3 +4,7 @@ docs
 src/test/quicktest.ts
 .zed
 dist
+dist/diagrams.js
+dist/diagrams.js.map
+dist/diagrams.min.js
+dist/diagrams.min.js.map
