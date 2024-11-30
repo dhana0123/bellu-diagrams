@@ -2,7 +2,7 @@ import { Vector2, V2, Transform } from './vector.js';
 import { BB_multiline } from './BBcode.js'
 import { TAG } from './tag_names.js'
 
-function assert(condition : boolean, message : string) : void {
+function assert(condition: boolean, message: string): void {
     if (!condition) {
         throw new Error(message || "Assertion failed");
     }
@@ -10,19 +10,19 @@ function assert(condition : boolean, message : string) : void {
 
 export enum DiagramType {
     Polygon = 'polygon',
-    Curve   = 'curve',
-    Text    = 'text',
-    Image   = 'image',
+    Curve = 'curve',
+    Text = 'text',
+    Image = 'image',
     Diagram = 'diagram',
     MultilineText = 'multilinetext',
 }
 
 export const DEFAULT_FONTSIZE = "16"; // 16px (12pt) is the web default
 
-export type Anchor = 
-    'top-left'    | 'top-center'    | 'top-right'    | 
-    'center-left' | 'center-center' | 'center-right' | 
-    'bottom-left' | 'bottom-center' | 'bottom-right' ;
+export type Anchor =
+    'top-left' | 'top-center' | 'top-right' |
+    'center-left' | 'center-center' | 'center-right' |
+    'bottom-left' | 'bottom-center' | 'bottom-right';
 
 /**
  * Make sure that every function return a new Diagram
@@ -30,15 +30,15 @@ export type Anchor =
  */
 
 export type DiagramStyle = {
-    "stroke"           : string,
-    "fill"             : string | LinearGradient,
-    "opacity"          : string,
-    "stroke-width"     : string, // number
-    "stroke-linecap"   : string,
-    "stroke-dasharray" : string, // number[]
-    "stroke-linejoin"  : string,
-    "vector-effect"    : string,
-    "filter"?          : string
+    "stroke": string,
+    "fill": string | LinearGradient,
+    "opacity": string,
+    "stroke-width": string, // number
+    "stroke-linecap": string,
+    "stroke-dasharray": string, // number[]
+    "stroke-linejoin": string,
+    "vector-effect": string,
+    "filter"?: string
     // TODO : add more style
 }
 
@@ -48,19 +48,19 @@ export type LinearGradient = {
     y1?: string,
     x2?: string,
     y2?: string,
-    stops: Array<{offset: string, color: string, opacity?: number }>
+    stops: Array<{ offset: string, color: string, opacity?: number }>
 }
 
 export type TextData = {
-    "text"             : string,
-    "font-family"      : string,
-    "font-size"        : string,
-    "font-weight"      : string,
-    "font-style"       : string,
-    "text-anchor"      : string,
-    "dy"               : string, // used to be "dominant-baseline": string,
-    "angle"            : string,
-    "font-scale"       : string, // this is a custom attribute that is not present in SVG
+    "text": string,
+    "font-family": string,
+    "font-size": string,
+    "font-weight": string,
+    "font-style": string,
+    "text-anchor": string,
+    "dy": string, // used to be "dominant-baseline": string,
+    "angle": string,
+    "font-scale": string, // this is a custom attribute that is not present in SVG
     // "letter-spacing"   : string,
     // "word-spacing"     : string,
     // "text-decoration"  : string,
@@ -68,41 +68,41 @@ export type TextData = {
 }
 
 export type ImageData = {
-    "src"    : string,
+    "src": string,
 }
 
 type ExtraTspanStyle = {
-    "dy" : string,
-    "dx" : string,
-    "textvar" : boolean,
-    "tag" : string,
-    "baseline-shift" : string,
+    "dy": string,
+    "dx": string,
+    "textvar": boolean,
+    "tag": string,
+    "baseline-shift": string,
     "font-size-scale-factor": number,
-    "is-prev-word" : boolean, // tag to indicate that this is part of the previous word
+    "is-prev-word": boolean, // tag to indicate that this is part of the previous word
 }
 export type TextSpanData = {
-    "text"  : string,
-    "style" : Partial<TextData> & Partial<DiagramStyle> & Partial<ExtraTspanStyle>,
+    "text": string,
+    "style": Partial<TextData> & Partial<DiagramStyle> & Partial<ExtraTspanStyle>,
 }
 export type MultilineTextData = {
-    "content" : TextSpanData[],
-    "scale-factor" : number,
+    "content": TextSpanData[],
+    "scale-factor": number,
 }
 
-function anchor_to_textdata(anchor : Anchor) : Partial<TextData> {
+function anchor_to_textdata(anchor: Anchor): Partial<TextData> {
     // TODO : might want to look at
     // hanging vs text-before-edge
     // ideographic vs text-after-edge
     switch (anchor) {
-        case "top-left"      : return {"text-anchor" : "start" , "dy" : "0.75em"};
-        case "top-center"    : return {"text-anchor" : "middle", "dy" : "0.75em"};
-        case "top-right"     : return {"text-anchor" : "end"   , "dy" : "0.75em"};
-        case "center-left"   : return {"text-anchor" : "start" , "dy" : "0.25em"};
-        case "center-center" : return {"text-anchor" : "middle", "dy" : "0.25em"};
-        case "center-right"  : return {"text-anchor" : "end"   , "dy" : "0.25em"};
-        case "bottom-left"   : return {"text-anchor" : "start" , "dy" : "-0.25em"};
-        case "bottom-center" : return {"text-anchor" : "middle", "dy" : "-0.25em"};
-        case "bottom-right"  : return {"text-anchor" : "end"   , "dy" : "-0.25em"};
+        case "top-left": return { "text-anchor": "start", "dy": "0.75em" };
+        case "top-center": return { "text-anchor": "middle", "dy": "0.75em" };
+        case "top-right": return { "text-anchor": "end", "dy": "0.75em" };
+        case "center-left": return { "text-anchor": "start", "dy": "0.25em" };
+        case "center-center": return { "text-anchor": "middle", "dy": "0.25em" };
+        case "center-right": return { "text-anchor": "end", "dy": "0.25em" };
+        case "bottom-left": return { "text-anchor": "start", "dy": "-0.25em" };
+        case "bottom-center": return { "text-anchor": "middle", "dy": "-0.25em" };
+        case "bottom-right": return { "text-anchor": "end", "dy": "-0.25em" };
         default: throw new Error("Unknown anchor " + anchor);
     }
 }
@@ -118,42 +118,42 @@ function anchor_to_textdata(anchor : Anchor) : Partial<TextData> {
 * Diagram is a tree of Diagrams
 */
 export class Diagram {
-    type          : DiagramType;
-    children      : Diagram[] = [];
-    path          : Path | undefined = undefined; // Polygon and Curve have a path
-    origin        : Vector2 = new Vector2(0, 0); // position of the origin of the diagram
-    style         : Partial<DiagramStyle>      = {};
-    textdata      : Partial<TextData>          = {};
-    multilinedata : Partial<MultilineTextData> = {};
-    imgdata       : Partial<ImageData>         = {};
-    mutable       : boolean   = false;
-    tags          : string[] = [];
-    
-    private _bbox_cache : [Vector2, Vector2] | undefined = undefined;
+    type: DiagramType;
+    children: Diagram[] = [];
+    path: Path | undefined = undefined; // Polygon and Curve have a path
+    origin: Vector2 = new Vector2(0, 0); // position of the origin of the diagram
+    style: Partial<DiagramStyle> = {};
+    textdata: Partial<TextData> = {};
+    multilinedata: Partial<MultilineTextData> = {};
+    imgdata: Partial<ImageData> = {};
+    mutable: boolean = false;
+    tags: string[] = [];
 
-    constructor(type_ : DiagramType, 
-        args : { 
-            path?     : Path, 
-            children? : Diagram[], 
-            textdata? : Partial<TextData>, 
-            imgdata?  : Partial<ImageData>,
-            multilinedata? : Partial<MultilineTextData>,
-            tags?     : string[],
+    private _bbox_cache: [Vector2, Vector2] | undefined = undefined;
+
+    constructor(type_: DiagramType,
+        args: {
+            path?: Path,
+            children?: Diagram[],
+            textdata?: Partial<TextData>,
+            imgdata?: Partial<ImageData>,
+            multilinedata?: Partial<MultilineTextData>,
+            tags?: string[],
         } = {}
     ) {
         this.type = type_;
         this.path = args.path;
         if (args.children) { this.children = args.children; }
         if (args.textdata) { this.textdata = args.textdata; }
-        if (args.imgdata)  { this.imgdata  = args.imgdata; }
-        if (args.tags)     { this.tags     = args.tags; }
+        if (args.imgdata) { this.imgdata = args.imgdata; }
+        if (args.tags) { this.tags = args.tags; }
         if (args.multilinedata) { this.multilinedata = args.multilinedata; }
     }
 
     /**
      * Turn the diagram into a mutable diagram
      */
-    public mut() : Diagram {
+    public mut(): Diagram {
         this.mutable = true;
         // make path mutable
         if (this.path != undefined) this.path.mutable = true;
@@ -162,7 +162,7 @@ export class Diagram {
         return this;
     }
 
-    public mut_parent_only() : Diagram {
+    public mut_parent_only(): Diagram {
         this.mutable = true;
         // make path mutable
         if (this.path != undefined) this.path.mutable = true;
@@ -172,8 +172,8 @@ export class Diagram {
     /**
      * Create a copy of the diagram that is immutable
      */
-    public immut() : Diagram {
-        let newd : Diagram = this.copy();
+    public immut(): Diagram {
+        let newd: Diagram = this.copy();
         newd.mutable = false;
         // make path immutable
         if (this.path != undefined) this.path.mutable = false;
@@ -182,9 +182,9 @@ export class Diagram {
         return newd;
     }
 
-    private static deep_setPrototypeOf(obj : any) : void {
+    private static deep_setPrototypeOf(obj: any): void {
         Object.setPrototypeOf(obj, Diagram.prototype);
-        let objd : Diagram = obj;
+        let objd: Diagram = obj;
         // convert position and origin_offset to Vector2
         objd.origin = Object.setPrototypeOf(objd.origin, Vector2.prototype);
         // make sure all of the children are Diagram
@@ -196,7 +196,7 @@ export class Diagram {
             Object.setPrototypeOf(objd.path, Path.prototype);
             objd.path = objd.path.copy();
         }
-        
+
         // bbox cache 
         if (objd._bbox_cache != undefined && objd._bbox_cache.length == 2) {
             Object.setPrototypeOf(objd._bbox_cache[0], Vector2.prototype);
@@ -208,33 +208,33 @@ export class Diagram {
      * Copy the diagram
      * @return { Diagram }
      */
-    public copy() : Diagram {
+    public copy(): Diagram {
         // do deepcopy with JSON
-        let newd : Diagram = JSON.parse(JSON.stringify(this));
+        let newd: Diagram = JSON.parse(JSON.stringify(this));
         // turn newd into Diagram
         Diagram.deep_setPrototypeOf(newd);
         return newd;
     }
 
-    public copy_if_not_mutable() : Diagram {
+    public copy_if_not_mutable(): Diagram {
         return this.mutable ? this : this.copy();
     }
 
     /**
      * Append tags to the diagram
      */
-    public append_tags(tags : string | string[]) : Diagram {
+    public append_tags(tags: string | string[]): Diagram {
         let newd = this.copy_if_not_mutable();
         if (!Array.isArray(tags)) tags = [tags];
-        for (let tag of tags){
-            if(!newd.tags.includes(tag)) newd.tags.push(tag);
+        for (let tag of tags) {
+            if (!newd.tags.includes(tag)) newd.tags.push(tag);
         }
         return newd;
     }
     /**
      * Remove tags from the diagram
      */
-    public remove_tags(tags : string | string[]) : Diagram {
+    public remove_tags(tags: string | string[]): Diagram {
         let newd = this.copy_if_not_mutable();
         newd.tags = newd.tags.filter(t => !tags.includes(t));
         return newd;
@@ -242,7 +242,7 @@ export class Diagram {
     /**
      * Reset all tags of the diagram
      */
-    public reset_tags() : Diagram {
+    public reset_tags(): Diagram {
         let newd = this.copy_if_not_mutable();
         newd.tags = [];
         return newd;
@@ -250,11 +250,11 @@ export class Diagram {
     /**
     * Check if the diagram contains a tag
     */
-    public contain_tag(tag : string) : boolean {
+    public contain_tag(tag: string): boolean {
         return this.tags.includes(tag);
     }
-    public contain_all_tags(tags : string[]) : boolean {
-        for (let tag of tags){
+    public contain_all_tags(tags: string[]): boolean {
+        for (let tag of tags) {
             if (!this.tags.includes(tag)) return false;
         }
         return true;
@@ -264,8 +264,8 @@ export class Diagram {
      * Collect all children and subchildren of the diagram
      * helper function for flatten()
      */
-    private collect_children() : Diagram[] {
-        let children : Diagram[] = [];
+    private collect_children(): Diagram[] {
+        let children: Diagram[] = [];
         if (this.type == DiagramType.Diagram) {
             for (let c of this.children) {
                 children = children.concat(c.collect_children());
@@ -281,8 +281,8 @@ export class Diagram {
      * so that the diagram only has one level of children
      * \* implemented for performance reason
      */
-    public flatten() : Diagram {
-        let newd : Diagram = this.copy_if_not_mutable();
+    public flatten(): Diagram {
+        let newd: Diagram = this.copy_if_not_mutable();
         newd.children = newd.collect_children();
         return newd;
     }
@@ -292,7 +292,7 @@ export class Diagram {
      * @param func function to apply
      * func takes in a diagram and returns a diagram
      */
-    public apply(func : (d : Diagram) => Diagram) : Diagram {
+    public apply(func: (d: Diagram) => Diagram): Diagram {
         return func(this.copy_if_not_mutable());
     }
 
@@ -301,8 +301,8 @@ export class Diagram {
      * @param func function to apply
      * func takes in a diagram and returns a diagram
      */
-    public apply_recursive(func : (d : Diagram) => Diagram) : Diagram {
-        let newd : Diagram = this.copy_if_not_mutable();
+    public apply_recursive(func: (d: Diagram) => Diagram): Diagram {
+        let newd: Diagram = this.copy_if_not_mutable();
         // apply to self
         newd = func(newd);
         // apply to children
@@ -311,18 +311,18 @@ export class Diagram {
         }
         return newd;
     }
-    
+
     /**
     * Apply a function to the diagram and all of its children recursively
     * The function is only applied to the diagrams that contain a specific tag
     * @param tags the tag to filter the diagrams
     * @param func function to apply
     * func takes in a diagram and returns a diagram
-    */ 
-    public apply_to_tagged_recursive(tags : string | string[], func : (d : Diagram) => Diagram) : Diagram {
+    */
+    public apply_to_tagged_recursive(tags: string | string[], func: (d: Diagram) => Diagram): Diagram {
         if (!Array.isArray(tags)) tags = [tags];
-        
-        let newd : Diagram = this.copy_if_not_mutable();
+
+        let newd: Diagram = this.copy_if_not_mutable();
         // if the diagram has the tag, apply the function to self
         if (newd.contain_all_tags(tags)) newd = func(newd);
         // apply to children
@@ -331,16 +331,16 @@ export class Diagram {
         }
         return newd;
     }
-    
+
     /**
     * Get all the diagrams that contain a specific tag
     * @param tags the tag to filter the diagrams
     * @return a list of diagrams
     */
-    public get_tagged_elements(tags : string | string[] ) : Diagram[] {
+    public get_tagged_elements(tags: string | string[]): Diagram[] {
         if (!Array.isArray(tags)) tags = [tags];
         let result = [];
-        
+
         if (this.contain_all_tags(tags)) result.push(this.copy_if_not_mutable());
         for (let i = 0; i < this.children.length; i++) {
             result = result.concat(this.children[i].get_tagged_elements(tags));
@@ -352,7 +352,7 @@ export class Diagram {
      * Combine another diagram with this diagram
      * @param diagrams a diagram or a list of diagrams
      */
-    public combine(...diagrams : Diagram[]) : Diagram {
+    public combine(...diagrams: Diagram[]): Diagram {
         return diagram_combine(this, ...diagrams);
     }
 
@@ -361,13 +361,13 @@ export class Diagram {
      * If the diagram is a polygon, convert it to a curve
      * If the diagram is a Diagram, convert all of the children to curves
      */
-    public to_curve() : Diagram {
-        let newd : Diagram = this.copy_if_not_mutable();
+    public to_curve(): Diagram {
+        let newd: Diagram = this.copy_if_not_mutable();
         if (newd.type == DiagramType.Polygon) {
             newd.type = DiagramType.Curve;
         } else if (newd.type == DiagramType.Diagram) {
             // newd.children = newd.children.map(c => c.to_curve());
-            for (let i = 0; i < newd.children.length; i++) 
+            for (let i = 0; i < newd.children.length; i++)
                 newd.children[i] = newd.children[i].to_curve();
         }
         return newd;
@@ -378,8 +378,8 @@ export class Diagram {
      * If the diagram is a curve, convert it to a polygon
      * If the diagram is a Diagram, convert all of the children to polygons
      */
-    public to_polygon() : Diagram {
-        let newd : Diagram = this.copy_if_not_mutable();
+    public to_polygon(): Diagram {
+        let newd: Diagram = this.copy_if_not_mutable();
         if (newd.type == DiagramType.Curve) {
             newd.type = DiagramType.Polygon;
         } else if (newd.type == DiagramType.Diagram) {
@@ -396,8 +396,8 @@ export class Diagram {
      * if the diagram is a diagram, add points to the last polygon or curve child
      * @param points points to add
      */
-    public add_points(points : Vector2[]) : Diagram {
-        let newd : Diagram = this.copy_if_not_mutable();
+    public add_points(points: Vector2[]): Diagram {
+        let newd: Diagram = this.copy_if_not_mutable();
         if (newd.type == DiagramType.Polygon || newd.type == DiagramType.Curve) {
             if (newd.path == undefined) { throw new Error(this.type + " must have a path"); }
             newd.path = newd.path.add_points(points);
@@ -409,19 +409,19 @@ export class Diagram {
         return newd;
     }
 
-    private update_style(stylename : keyof Diagram['style'], stylevalue : string | LinearGradient, excludedType? : DiagramType[]) : Diagram {
-        let newd : Diagram = this.copy_if_not_mutable();
-        if (excludedType?.includes(newd.type)) { 
-            return newd; 
-        } else if (newd.type == DiagramType.Polygon || newd.type == DiagramType.Curve 
-            || newd.type == DiagramType.Text || newd.type == DiagramType.Image 
+    private update_style(stylename: keyof Diagram['style'], stylevalue: string | LinearGradient, excludedType?: DiagramType[]): Diagram {
+        let newd: Diagram = this.copy_if_not_mutable();
+        if (excludedType?.includes(newd.type)) {
+            return newd;
+        } else if (newd.type == DiagramType.Polygon || newd.type == DiagramType.Curve
+            || newd.type == DiagramType.Text || newd.type == DiagramType.Image
             || newd.type == DiagramType.MultilineText
         ) {
-           if(stylename === "fill") {
-            newd.style[stylename] = stylevalue;
-           } else { 
-            newd.style[stylename] = stylevalue as string;
-           }
+            if (stylename === "fill") {
+                newd.style[stylename] = stylevalue;
+            } else {
+                newd.style[stylename] = stylevalue as string;
+            }
         } else if (newd.type == DiagramType.Diagram) {
             // newd.children = newd.children.map(c => c.update_style(stylename, stylevalue, excludedType));
             for (let i = 0; i < newd.children.length; i++)
@@ -431,57 +431,59 @@ export class Diagram {
         }
         return newd;
     }
-    
+
     /* * Clone style from another diagram */
-    public clone_style_from(diagram : Diagram) : Diagram {
+    public clone_style_from(diagram: Diagram): Diagram {
         return this.apply_recursive(d => {
-            d.style = {...diagram.style};
+            d.style = { ...diagram.style };
             return d;
         });
     }
 
-    public fill(color : string | LinearGradient) : Diagram { 
+
+
+    public fill(color: string | LinearGradient): Diagram {
         return this.update_style('fill', color, [DiagramType.Text]);
     }
-    public stroke(color : string) : Diagram { 
+    public stroke(color: string): Diagram {
         return this.update_style('stroke', color, [DiagramType.Text]);
     }
-    public opacity(opacity : number) : Diagram {
+    public opacity(opacity: number): Diagram {
         return this.update_style('opacity', opacity.toString());
     }
-    public strokewidth(width : number) : Diagram { 
+    public strokewidth(width: number): Diagram {
         return this.update_style('stroke-width', width.toString(), [DiagramType.Text]);
     }
-    public strokelinecap(linecap : 'butt' | 'round' | 'square') : Diagram {
+    public strokelinecap(linecap: 'butt' | 'round' | 'square'): Diagram {
         return this.update_style('stroke-linecap', linecap);
     }
-    public strokelinejoin(linejoin : 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round') : Diagram {
+    public strokelinejoin(linejoin: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round'): Diagram {
         return this.update_style('stroke-linejoin', linejoin);
     }
-    public strokedasharray(dasharray : number[]) : Diagram {
+    public strokedasharray(dasharray: number[]): Diagram {
         return this.update_style('stroke-dasharray', dasharray.join(','));
     }
-    public vectoreffect(vectoreffect : 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position'
-) : Diagram {
+    public vectoreffect(vectoreffect: 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position'
+    ): Diagram {
         return this.update_style('vector-effect', vectoreffect);
     }
-    public filter(filter : string) : Diagram {
+    public filter(filter: string): Diagram {
         return this.update_style('filter', `url(#${filter})`);
     }
 
-    public textfill(color : string) : Diagram {
+    public textfill(color: string): Diagram {
         return this.update_style('fill', color, [DiagramType.Polygon, DiagramType.Curve]);
     }
-    public textstroke(color : string) : Diagram {
+    public textstroke(color: string): Diagram {
         return this.update_style('stroke', color, [DiagramType.Polygon, DiagramType.Curve]);
     }
-    public textstrokewidth(width : number) : Diagram {
+    public textstrokewidth(width: number): Diagram {
         return this.update_style('stroke-width', width.toString(), [DiagramType.Polygon, DiagramType.Curve]);
     }
 
 
-    private update_textdata(textdataname : keyof Diagram['textdata'], textdatavalue : string) : Diagram {
-        let newd : Diagram = this.copy_if_not_mutable();
+    private update_textdata(textdataname: keyof Diagram['textdata'], textdatavalue: string): Diagram {
+        let newd: Diagram = this.copy_if_not_mutable();
         if (newd.type == DiagramType.Text || newd.type == DiagramType.MultilineText) {
             newd.textdata[textdataname] = textdatavalue;
         } else if (newd.type == DiagramType.Diagram) {
@@ -495,32 +497,32 @@ export class Diagram {
         }
         return newd;
     }
-    public fontfamily(fontfamily : string) : Diagram {
+    public fontfamily(fontfamily: string): Diagram {
         return this.update_textdata('font-family', fontfamily);
     }
-    public fontstyle(fontstyle : string) : Diagram {
+    public fontstyle(fontstyle: string): Diagram {
         return this.update_textdata('font-style', fontstyle);
     }
-    public fontsize(fontsize : number) : Diagram {
+    public fontsize(fontsize: number): Diagram {
         return this.update_textdata('font-size', fontsize.toString());
     }
-    public fontweight(fontweight : 'normal' | 'bold' | 'bolder' | 'lighter' | number ) : Diagram {
+    public fontweight(fontweight: 'normal' | 'bold' | 'bolder' | 'lighter' | number): Diagram {
         return this.update_textdata('font-weight', fontweight.toString());
     }
-    public fontscale(fontscale : number | 'auto') : Diagram {
+    public fontscale(fontscale: number | 'auto'): Diagram {
         return this.update_textdata('font-scale', fontscale.toString());
     }
-    public textanchor(textanchor : 'start' | 'middle' | 'end' ) : Diagram {
+    public textanchor(textanchor: 'start' | 'middle' | 'end'): Diagram {
         return this.update_textdata('text-anchor', textanchor);
     }
-    public textdy(dy : string) : Diagram {
+    public textdy(dy: string): Diagram {
         return this.update_textdata('dy', dy);
     }
-    public textangle(angle : number){
+    public textangle(angle: number) {
         return this.update_textdata('angle', angle.toString());
     }
-    public text_tovar() : Diagram {
-        let newd : Diagram = this.copy_if_not_mutable();
+    public text_tovar(): Diagram {
+        let newd: Diagram = this.copy_if_not_mutable();
         if (newd.type == DiagramType.Text) {
             newd = newd.append_tags(TAG.TEXTVAR);
         } else if (newd.type == DiagramType.Diagram) {
@@ -530,8 +532,8 @@ export class Diagram {
         }
         return newd;
     }
-    public text_totext() : Diagram {
-        let newd : Diagram = this.copy_if_not_mutable();
+    public text_totext(): Diagram {
+        let newd: Diagram = this.copy_if_not_mutable();
         if (newd.type == DiagramType.Text) {
             newd = newd.remove_tags('textvar');
         } else if (newd.type == DiagramType.Diagram) {
@@ -541,45 +543,45 @@ export class Diagram {
         }
         return newd;
     }
-            
+
 
 
     /**
      * Get the bounding box of the diagram
      * @returns [min, max] where min is the top left corner and max is the bottom right corner
      */
-    public bounding_box() : [Vector2, Vector2] {
+    public bounding_box(): [Vector2, Vector2] {
         if (this._bbox_cache != undefined) return this._bbox_cache;
         let minx = Infinity, miny = Infinity;
         let maxx = -Infinity, maxy = -Infinity;
-        if (this.type == DiagramType.Diagram){
-                for (let c = 0; c < this.children.length; c++){
-                    let child = this.children[c];
-                    let [min, max] = child.bounding_box();
-                    minx = Math.min(minx, min.x);
-                    miny = Math.min(miny, min.y);
-                    maxx = Math.max(maxx, max.x);
-                    maxy = Math.max(maxy, max.y);
-                }
-                const bbox = [new Vector2(minx, miny), new Vector2(maxx, maxy)] as [Vector2, Vector2];
-                this._bbox_cache = bbox;
-                return bbox;
+        if (this.type == DiagramType.Diagram) {
+            for (let c = 0; c < this.children.length; c++) {
+                let child = this.children[c];
+                let [min, max] = child.bounding_box();
+                minx = Math.min(minx, min.x);
+                miny = Math.min(miny, min.y);
+                maxx = Math.max(maxx, max.x);
+                maxy = Math.max(maxy, max.y);
+            }
+            const bbox = [new Vector2(minx, miny), new Vector2(maxx, maxy)] as [Vector2, Vector2];
+            this._bbox_cache = bbox;
+            return bbox;
         }
-        else if (this.type == DiagramType.Curve || this.type == DiagramType.Polygon 
-            || this.type == DiagramType.Image){
-                if (this.path == undefined) { throw new Error(this.type + " must have a path"); }
-                for (let p = 0; p < this.path.points.length; p++) {
-                    let point = this.path.points[p];
-                    minx = Math.min(minx, point.x);
-                    miny = Math.min(miny, point.y);
-                    maxx = Math.max(maxx, point.x);
-                    maxy = Math.max(maxy, point.y);
-                }
-                const bbox = [new Vector2(minx, miny), new Vector2(maxx, maxy)] as [Vector2, Vector2];
-                this._bbox_cache = bbox;
-                return bbox;
-        } 
-        else if (this.type == DiagramType.Text || this.type == DiagramType.MultilineText){
+        else if (this.type == DiagramType.Curve || this.type == DiagramType.Polygon
+            || this.type == DiagramType.Image) {
+            if (this.path == undefined) { throw new Error(this.type + " must have a path"); }
+            for (let p = 0; p < this.path.points.length; p++) {
+                let point = this.path.points[p];
+                minx = Math.min(minx, point.x);
+                miny = Math.min(miny, point.y);
+                maxx = Math.max(maxx, point.x);
+                maxy = Math.max(maxy, point.y);
+            }
+            const bbox = [new Vector2(minx, miny), new Vector2(maxx, maxy)] as [Vector2, Vector2];
+            this._bbox_cache = bbox;
+            return bbox;
+        }
+        else if (this.type == DiagramType.Text || this.type == DiagramType.MultilineText) {
             const bbox = [this.origin.copy(), this.origin.copy()] as [Vector2, Vector2];
             this._bbox_cache = bbox;
             return bbox;
@@ -593,8 +595,8 @@ export class Diagram {
      * Transform the diagram by a function
      * @param transform_function function to transform the diagram
      */
-    public transform(transform_function : (p : Vector2) => Vector2) : Diagram {
-        let newd : Diagram = this.copy_if_not_mutable();
+    public transform(transform_function: (p: Vector2) => Vector2): Diagram {
+        let newd: Diagram = this.copy_if_not_mutable();
         newd._bbox_cache = undefined;
         // transform all children
         // newd.children = newd.children.map(c => c.transform(transform_function));
@@ -611,7 +613,7 @@ export class Diagram {
      * Translate the diagram by a vector
      * @param v vector to translate
      */
-    public translate(v : Vector2) : Diagram {
+    public translate(v: Vector2): Diagram {
         // return this.transform(Transform.translate(v));
         const prev_cached_bbox = this._bbox_cache;
         const newd = this.transform(Transform.translate(v));
@@ -625,7 +627,7 @@ export class Diagram {
      * move the diagram to a position
      * @param v position to move to (if left undefined, move to the origin)
      */
-    public position(v : Vector2 = new Vector2(0,0)) : Diagram {
+    public position(v: Vector2 = new Vector2(0, 0)): Diagram {
         let dv = v.sub(this.origin)
         return this.translate(dv);
     }
@@ -635,7 +637,7 @@ export class Diagram {
      * @param angle angle to rotate
      * @param pivot pivot point, if left undefined, rotate around the origin
      */
-    public rotate(angle : number, pivot : Vector2 | undefined = undefined) : Diagram {
+    public rotate(angle: number, pivot: Vector2 | undefined = undefined): Diagram {
         if (pivot == undefined) { pivot = this.origin; }
         return this.transform(Transform.rotate(angle, pivot));
     }
@@ -645,7 +647,7 @@ export class Diagram {
      * @param scale scale to scale (x, y)
      * @param origin origin point, if left undefined, scale around the origin
      */
-    public scale(scale : Vector2 | number, origin? : Vector2) : Diagram {
+    public scale(scale: Vector2 | number, origin?: Vector2): Diagram {
         if (origin == undefined) { origin = this.origin; }
         if (typeof scale == 'number') { scale = new Vector2(scale, scale); }
         return this.transform(Transform.scale(scale, origin));
@@ -655,7 +657,7 @@ export class Diagram {
      * Scale texts contained in the diagram by a scale
      * @param scale scaling factor
      */
-    public scaletext(scale : number) : Diagram {
+    public scaletext(scale: number): Diagram {
         return this.apply_recursive(d => {
             switch (d.type) {
                 case DiagramType.Text: {
@@ -679,7 +681,7 @@ export class Diagram {
      * @param angle angle to skew
      * @param base base point, if left undefined, skew around the origin
      */
-    public skewX(angle : number, base? : Vector2) : Diagram {
+    public skewX(angle: number, base?: Vector2): Diagram {
         if (base == undefined) { base = this.origin; }
         return this.transform(Transform.skewX(angle, base.y));
     }
@@ -689,7 +691,7 @@ export class Diagram {
      * @param angle angle to skew
      * @param base base point, if left undefined, skew around the origin
      */
-    public skewY(angle : number, base? : Vector2) : Diagram {
+    public skewY(angle: number, base?: Vector2): Diagram {
         if (base == undefined) { base = this.origin; }
         return this.transform(Transform.skewY(angle, base.x));
     }
@@ -698,7 +700,7 @@ export class Diagram {
      * Reflect the diagram over a point
      * @param p point to reflect over
      */
-    public reflect_over_point(p : Vector2) {
+    public reflect_over_point(p: Vector2) {
         return this.transform(Transform.reflect_over_point(p));
     }
 
@@ -707,7 +709,7 @@ export class Diagram {
      * @param p1 point on the line
      * @param p2 point on the line
      */
-    public reflect_over_line(p1 : Vector2, p2 : Vector2) {
+    public reflect_over_line(p1: Vector2, p2: Vector2) {
         return this.transform(Transform.reflect_over_line(p1, p2));
     }
 
@@ -719,7 +721,7 @@ export class Diagram {
      * @param p1 point
      * @param p2 point
      */
-    public reflect(p1? : Vector2, p2? : Vector2){
+    public reflect(p1?: Vector2, p2?: Vector2) {
         if (p1 == undefined && p2 == undefined) {
             return this.reflect_over_point(this.origin);
         } else if (p1 != undefined && p2 == undefined) {
@@ -737,7 +739,7 @@ export class Diagram {
      * @param a y value of the line
      * if left undefined, flip over the origin
      */
-    public vflip(a? : number) {
+    public vflip(a?: number) {
         if (a == undefined) { a = this.origin.y; }
         return this.reflect(new Vector2(0, a), new Vector2(1, a));
     }
@@ -748,7 +750,7 @@ export class Diagram {
      * @param a x value of the line
      * if left undefined, flip over the origin
      */
-    public hflip(a? : number){
+    public hflip(a?: number) {
         if (a == undefined) { a = this.origin.x; }
         return this.reflect(new Vector2(a, 0), new Vector2(a, 1));
     }
@@ -762,22 +764,22 @@ export class Diagram {
      *   'bottom-left', 'bottom-center', 'bottom-right'
      * @returns the position of the anchor
      */
-    public get_anchor(anchor : Anchor) : Vector2 {
+    public get_anchor(anchor: Anchor): Vector2 {
         let [min, max] = this.bounding_box();
         let minx = min.x, miny = min.y;
         let maxx = max.x, maxy = max.y;
         let midx = (minx + maxx) / 2;
         let midy = (miny + maxy) / 2;
         switch (anchor) {
-            case "top-left"      : return new Vector2(minx, maxy);
-            case "top-center"    : return new Vector2(midx, maxy);
-            case "top-right"     : return new Vector2(maxx, maxy);
-            case "center-left"   : return new Vector2(minx, midy);
-            case "center-center" : return new Vector2(midx, midy);
-            case "center-right"  : return new Vector2(maxx, midy);
-            case "bottom-left"   : return new Vector2(minx, miny);
-            case "bottom-center" : return new Vector2(midx, miny);
-            case "bottom-right"  : return new Vector2(maxx, miny);
+            case "top-left": return new Vector2(minx, maxy);
+            case "top-center": return new Vector2(midx, maxy);
+            case "top-right": return new Vector2(maxx, maxy);
+            case "center-left": return new Vector2(minx, midy);
+            case "center-center": return new Vector2(midx, midy);
+            case "center-right": return new Vector2(maxx, midy);
+            case "bottom-left": return new Vector2(minx, miny);
+            case "bottom-center": return new Vector2(midx, miny);
+            case "bottom-right": return new Vector2(maxx, miny);
             default: throw new Error("Unknown anchor " + anchor);
         }
     }
@@ -791,8 +793,8 @@ export class Diagram {
      *  'bottom-left', 'bottom-center', 'bottom-right'
      * * for texts, use `move_origin_text()`
      */
-    public move_origin(pos : Vector2 | Anchor) : Diagram {
-        let newd : Diagram = this.copy_if_not_mutable();
+    public move_origin(pos: Vector2 | Anchor): Diagram {
+        let newd: Diagram = this.copy_if_not_mutable();
         if (pos instanceof Vector2) {
             newd.origin = pos;
         } else {
@@ -809,7 +811,7 @@ export class Diagram {
      * 'center-left', 'center-center', 'center-right'
      * 'bottom-left', 'bottom-center', 'bottom-right'
      */
-    private __move_origin_text(anchor : Anchor) : Diagram {
+    private __move_origin_text(anchor: Anchor): Diagram {
         // for text, use text-anchor and dominant-baseline
         let newd = this.copy_if_not_mutable();
         let textdata = anchor_to_textdata(anchor);
@@ -827,7 +829,7 @@ export class Diagram {
      * 'bottom-left', 'bottom-center', 'bottom-right'
      *
      */
-    public move_origin_text(anchor : Anchor) : Diagram {
+    public move_origin_text(anchor: Anchor): Diagram {
         let newd = this.copy_if_not_mutable();
         if (this.type == DiagramType.Text || this.type == DiagramType.MultilineText) {
             newd = newd.__move_origin_text(anchor);
@@ -841,7 +843,7 @@ export class Diagram {
         return newd;
     }
 
-    public path_length() : number {
+    public path_length(): number {
         if (this.type == DiagramType.Diagram) {
             let length = 0;
             for (let c = 0; c < this.children.length; c++) {
@@ -855,7 +857,7 @@ export class Diagram {
             throw new Error("Unreachable, unknown diagram type : " + this.type);
         }
     }
-    
+
     /**
     * Reverse the order of the points in the path
     */
@@ -877,11 +879,11 @@ export class Diagram {
      * If segment_index (n) is defined, t can be outside of [0, 1] and will return the extrapolated point
      * @returns the position of the point
      */
-    public parametric_point(t : number, segment_index? : number) : Vector2 {
+    public parametric_point(t: number, segment_index?: number): Vector2 {
         if (this.type == DiagramType.Diagram) {
             // use entire length, use the childrens
             let cumuative_length = [];
-            let length   = 0.0;
+            let length = 0.0;
             for (let c = 0; c < this.children.length; c++) {
                 length += this.children[c].path_length();
                 cumuative_length.push(length);
@@ -894,7 +896,7 @@ export class Diagram {
                 if (t <= cumulative_t[i]) {
                     let child_id = i;
 
-                    let prev_t = (i == 0) ? 0 : cumulative_t[i-1];
+                    let prev_t = (i == 0) ? 0 : cumulative_t[i - 1];
                     let segment_t = (t - prev_t) / (cumulative_t[i] - prev_t);
                     return this.children[child_id].parametric_point(segment_t);
                 }
@@ -913,15 +915,15 @@ export class Diagram {
         }
     }
 
-    public debug_bbox() : Diagram {
+    public debug_bbox(): Diagram {
         // TODO : let user supply the styling function
-        let style_bbox = (d : Diagram) => {
-            return d.fill('none').stroke('gray').strokedasharray([5,5])
+        let style_bbox = (d: Diagram) => {
+            return d.fill('none').stroke('gray').strokedasharray([5, 5])
         };
 
         let [min, max] = this.bounding_box();
         let rect_bbox = polygon([
-            new Vector2(min.x, min.y), new Vector2(max.x, min.y), 
+            new Vector2(min.x, min.y), new Vector2(max.x, min.y),
             new Vector2(max.x, max.y), new Vector2(min.x, max.y)
         ]).apply(style_bbox);
 
@@ -930,12 +932,12 @@ export class Diagram {
         return rect_bbox.combine(origin_x);
     }
 
-    public debug(show_index : boolean = true) : Diagram {
+    public debug(show_index: boolean = true): Diagram {
         // TODO : let user supply the styling function
-        let style_path = (d : Diagram) => {
-            return d.fill('none').stroke('red').strokedasharray([5,5])
+        let style_path = (d: Diagram) => {
+            return d.fill('none').stroke('red').strokedasharray([5, 5])
         };
-        let style_index = (d : Diagram) => {
+        let style_index = (d: Diagram) => {
             let bg = d.textfill('white').textstroke('white').textstrokewidth(5);
             let dd = d.fill('black');
             return bg.combine(dd);
@@ -944,13 +946,13 @@ export class Diagram {
         // handle each type separately
         if (this.type == DiagramType.Diagram) {
             return this.debug_bbox();
-        } 
-        else if (this.type == DiagramType.Text){
+        }
+        else if (this.type == DiagramType.Text) {
             // return empty at diagram origin
             return empty(this.origin);
         }
-        else if (this.type == DiagramType.Polygon || this.type == DiagramType.Curve 
-            || this.type == DiagramType.Image){
+        else if (this.type == DiagramType.Polygon || this.type == DiagramType.Curve
+            || this.type == DiagramType.Image) {
             let f_obj = this.type == DiagramType.Polygon || DiagramType.Image ? polygon : curve;
 
             let deb_bbox = this.debug_bbox();
@@ -964,8 +966,8 @@ export class Diagram {
             // iterate for all path points
             let points = this.path.points;
             // let point_texts = points.map((p, i) => text(i.toString()).position(p).apply(style_index));
-            let point_texts : Diagram[] = [];
-            let prev_point : Vector2 | undefined = undefined;
+            let point_texts: Diagram[] = [];
+            let prev_point: Vector2 | undefined = undefined;
 
             let [min, max] = this.bounding_box();
             let minimum_dist_tolerance = Math.min(max.x - min.x, max.y - min.y) / 10;
@@ -978,35 +980,35 @@ export class Diagram {
                 prev_point = points[i];
             }
 
-            return deb_bbox.combine(deb_object,...point_texts);
+            return deb_bbox.combine(deb_object, ...point_texts);
         }
         else {
             throw new Error("Unreachable, unknown diagram type : " + this.type);
         }
     }
-    
-    public is_empty() : boolean {
+
+    public is_empty(): boolean {
         return this.contain_tag(TAG.EMPTY);
     }
 }
 
 export class Path {
-    mutable : boolean = false;
-    constructor(public points : Vector2[]) { }
+    mutable: boolean = false;
+    constructor(public points: Vector2[]) { }
 
-    copy() : Path {
-        let newpoints = this.points.map(p => new Vector2(p.x,p.y));
+    copy(): Path {
+        let newpoints = this.points.map(p => new Vector2(p.x, p.y));
         return new Path(newpoints);
     }
-    copy_if_not_mutable() : Path {
+    copy_if_not_mutable(): Path {
         return this.mutable ? this : this.copy();
     }
-    
+
     /**
     * Reverse the order of the points in the path
     */
-    public reverse() : Path {
-        let newp : Path = this.copy_if_not_mutable();
+    public reverse(): Path {
+        let newp: Path = this.copy_if_not_mutable();
         newp.points = newp.points.reverse();
         return newp;
     }
@@ -1014,10 +1016,10 @@ export class Path {
     /**
      * Get the length of the path
      */
-    public length() : number {
+    public length(): number {
         let length = 0;
         for (let i = 1; i < this.points.length; i++) {
-            length += this.points[i].sub(this.points[i-1]).length();
+            length += this.points[i].sub(this.points[i - 1]).length();
         }
         return length;
     }
@@ -1026,8 +1028,8 @@ export class Path {
      * add points to the path
      * @param points points to add
      */
-    public add_points(points : Vector2[]) : Path {
-        let newp : Path = this.copy_if_not_mutable();
+    public add_points(points: Vector2[]): Path {
+        let newp: Path = this.copy_if_not_mutable();
         newp.points = newp.points.concat(points);
         return newp;
     }
@@ -1043,18 +1045,18 @@ export class Path {
      * If `segment_index` (n) is defined, t can be outside of [0, 1] and will return the extrapolated point.
      * @returns the position of the point
     */
-    public parametric_point(t : number, closed : boolean = false, segment_index? : number) : Vector2 {
+    public parametric_point(t: number, closed: boolean = false, segment_index?: number): Vector2 {
         let extended_points = this.points;
         if (closed) extended_points = this.points.concat(this.points[0]);
         // for a closed path, there's an extra segment connecting the last point to the first point
 
-        if (segment_index == undefined) { 
+        if (segment_index == undefined) {
             if (t < 0 || t > 1) { throw Error("t must be between 0 and 1"); }
             // use entire length
             let cumulative_length = [];
-            let length   = 0.0;
+            let length = 0.0;
             for (let i = 1; i < extended_points.length; i++) {
-                length += extended_points[i].sub(extended_points[i-1]).length();
+                length += extended_points[i].sub(extended_points[i - 1]).length();
                 cumulative_length.push(length);
             }
             let total_length = length;
@@ -1064,7 +1066,7 @@ export class Path {
                 if (t <= cumulative_t[i]) {
                     let segment_id = i;
 
-                    let prev_t = (i == 0) ? 0 : cumulative_t[i-1];
+                    let prev_t = (i == 0) ? 0 : cumulative_t[i - 1];
                     let segment_t = (t - prev_t) / (cumulative_t[i] - prev_t);
                     return this.parametric_point(segment_t, closed, segment_id);
                 }
@@ -1073,12 +1075,12 @@ export class Path {
             throw Error("Unreachable");
         } else {
             // take nth segment
-            if (segment_index < 0 || segment_index > extended_points.length - 1) { 
-                throw Error("segment_index must be between 0 and n-1"); 
+            if (segment_index < 0 || segment_index > extended_points.length - 1) {
+                throw Error("segment_index must be between 0 and n-1");
             }
             let start = extended_points[segment_index];
-            let end   = extended_points[segment_index + 1];
-            let dir : Vector2 = end.sub(start);
+            let end = extended_points[segment_index + 1];
+            let dir: Vector2 = end.sub(start);
             return start.add(dir.scale(t));
         }
     }
@@ -1087,8 +1089,8 @@ export class Path {
      * Tranfrom the path by a function
      * @param transform_function function to transform the path
      */
-    public transform(transform_function : (p : Vector2) => Vector2) : Path {
-        let newp : Path = this.copy_if_not_mutable();
+    public transform(transform_function: (p: Vector2) => Vector2): Path {
+        let newp: Path = this.copy_if_not_mutable();
         // transform all the points
         // newp.points = newp.points.map(p => transform_function(p));
         for (let i = 0; i < newp.points.length; i++) newp.points[i] = transform_function(newp.points[i]);
@@ -1101,7 +1103,7 @@ export class Path {
  * @param diagrams list of diagrams to combine
  * @returns a diagram
  */
-export function diagram_combine(...diagrams : Diagram[]) : Diagram {
+export function diagram_combine(...diagrams: Diagram[]): Diagram {
     if (diagrams.length == 0) { return empty(); }
     let newdiagrams = diagrams.map(d => d.copy_if_not_mutable());
 
@@ -1109,13 +1111,13 @@ export function diagram_combine(...diagrams : Diagram[]) : Diagram {
     // if they are, then set the new diagram to be mutable
     let all_children_mutable = true;
     for (let i = 0; i < newdiagrams.length; i++) {
-        if (!newdiagrams[i].mutable) { 
-            all_children_mutable = false; 
-            break; 
+        if (!newdiagrams[i].mutable) {
+            all_children_mutable = false;
+            break;
         }
     }
 
-    let newd = new Diagram(DiagramType.Diagram, {children : newdiagrams});
+    let newd = new Diagram(DiagramType.Diagram, { children: newdiagrams });
     newd.mutable = all_children_mutable;
     return newd.move_origin(diagrams[0].origin);
     // return newd.move_origin(Anchor.CenterCenter);
@@ -1130,9 +1132,9 @@ export function diagram_combine(...diagrams : Diagram[]) : Diagram {
  * @param points list of points
  * @returns a curve diagram
  */
-export function curve(points : Vector2[]) : Diagram {
-    let path : Path = new Path(points);
-    let curve = new Diagram(DiagramType.Curve, {path : path});
+export function curve(points: Vector2[]): Diagram {
+    let path: Path = new Path(points);
+    let curve = new Diagram(DiagramType.Curve, { path: path });
     return curve;
 }
 
@@ -1142,7 +1144,7 @@ export function curve(points : Vector2[]) : Diagram {
  * @param end end point
  * @returns a line diagram
  */
-export function line(start : Vector2, end : Vector2) : Diagram {
+export function line(start: Vector2, end: Vector2): Diagram {
     return curve([start, end]).append_tags(TAG.LINE);
 }
 
@@ -1152,12 +1154,12 @@ export function line(start : Vector2, end : Vector2) : Diagram {
  * @param points list of points
  * @returns a polygon diagram
  */
-export function polygon(points: Vector2[]) : Diagram {
+export function polygon(points: Vector2[]): Diagram {
     assert(points.length >= 3, "Polygon must have at least 3 points");
-    let path : Path = new Path(points);
+    let path: Path = new Path(points);
 
     // create diagram
-    let polygon = new Diagram(DiagramType.Polygon, {path : path});
+    let polygon = new Diagram(DiagramType.Polygon, { path: path });
     return polygon;
 }
 
@@ -1166,7 +1168,7 @@ export function polygon(points: Vector2[]) : Diagram {
  * @param v position of the point
  * @returns an empty diagram
  */
-export function empty(v : Vector2 = V2(0,0)) : Diagram {
+export function empty(v: Vector2 = V2(0, 0)): Diagram {
     let emp = curve([v]).append_tags(TAG.EMPTY);
     return emp;
 }
@@ -1176,10 +1178,10 @@ export function empty(v : Vector2 = V2(0,0)) : Diagram {
  * @param str text to display
  * @returns a text diagram
  */
-export function text(str : string) : Diagram {
+export function text(str: string): Diagram {
     let dtext = new Diagram(DiagramType.Text, {
-        textdata : { text : str, "font-size" : DEFAULT_FONTSIZE },
-        path : new Path([new Vector2(0, 0)]),
+        textdata: { text: str, "font-size": DEFAULT_FONTSIZE, },
+        path: new Path([new Vector2(0, 0)]),
     });
     return dtext;
 }
@@ -1191,14 +1193,14 @@ export function text(str : string) : Diagram {
  * @param height height of the image
  * @returns an image diagram
  */
-export function image(src : string, width : number, height: number){
-    let imgdata : ImageData = { src }
+export function image(src: string, width: number, height: number) {
+    let imgdata: ImageData = { src }
     // path: bottom-left, bottom-right, top-right, top-left
-    let path    : Path      = new Path([
-        V2(-width/2, -height/2), V2(width/2, -height/2),
-        V2(width/2, height/2), V2(-width/2, height/2),
+    let path: Path = new Path([
+        V2(-width / 2, -height / 2), V2(width / 2, -height / 2),
+        V2(width / 2, height / 2), V2(-width / 2, height / 2),
     ]);
-    let img = new Diagram(DiagramType.Image, {imgdata : imgdata, path : path});
+    let img = new Diagram(DiagramType.Image, { imgdata: imgdata, path: path });
     return img;
 }
 
@@ -1206,26 +1208,26 @@ export function image(src : string, width : number, height: number){
  * Create a multiline text diagram
  * @param strs list of text to display
  */
-export function multiline(spans : ([string] | [string,Partial<TextData>])[]) : Diagram {
-    let tspans : TextSpanData[] = [];
+export function multiline(spans: ([string] | [string, Partial<TextData>])[]): Diagram {
+    let tspans: TextSpanData[] = [];
     for (let i = 0; i < spans.length; i++) {
         let text = spans[i][0];
         let style = spans[i][1] ?? {};
-        tspans.push({text, style});
+        tspans.push({ text, style });
     }
     let dmulti = new Diagram(DiagramType.MultilineText, {
-        multilinedata : { content : tspans, "scale-factor" : 1 },
-        path : new Path([new Vector2(0, 0)]),
+        multilinedata: { content: tspans, "scale-factor": 1 },
+        path: new Path([new Vector2(0, 0)]),
     });
     return dmulti;
 }
 
-export function multiline_bb(bbstr : string, linespace? : string, split_by_word : boolean = false) : Diagram {
-    let tspans : TextSpanData[] = BB_multiline.from_BBCode(bbstr,linespace) as TextSpanData[];
+export function multiline_bb(bbstr: string, linespace?: string, split_by_word: boolean = false): Diagram {
+    let tspans: TextSpanData[] = BB_multiline.from_BBCode(bbstr, linespace) as TextSpanData[];
     if (split_by_word) tspans = BB_multiline.split_tspans_by_words(tspans);
     let dmulti = new Diagram(DiagramType.MultilineText, {
-        multilinedata : { content : tspans, "scale-factor" : 1 },
-        path : new Path([new Vector2(0, 0)]),
+        multilinedata: { content: tspans, "scale-factor": 1 },
+        path: new Path([new Vector2(0, 0)]),
     });
     return dmulti;
 }
@@ -1233,10 +1235,10 @@ export function multiline_bb(bbstr : string, linespace? : string, split_by_word 
 
 // END primitives =============================
 
-export function diagram_from_jsonstring(str : string) : Diagram {
+export function diagram_from_jsonstring(str: string): Diagram {
     try {
         // turn str into JSON object
-        let d : Diagram = JSON.parse(str);
+        let d: Diagram = JSON.parse(str);
         // turn d into Diagram
         Object.setPrototypeOf(d, Diagram.prototype);
         d = d.copy();
@@ -1244,6 +1246,6 @@ export function diagram_from_jsonstring(str : string) : Diagram {
     } catch (e) {
         // if there's a mistake, return an empty diagram
         console.warn(e);
-        return empty(new Vector2(0,0));
+        return empty(new Vector2(0, 0));
     }
 }

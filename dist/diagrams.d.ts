@@ -476,6 +476,467 @@ declare function image(src: string, width: number, height: number): Diagram;
 declare function multiline(spans: ([string] | [string, Partial<TextData>])[]): Diagram;
 declare function multiline_bb(bbstr: string, linespace?: string, split_by_word?: boolean): Diagram;
 
+type VerticalAlignment = 'top' | 'center' | 'bottom';
+type HorizontalAlignment = 'left' | 'center' | 'right';
+/**
+ * Align diagrams vertically
+ * @param diagrams diagrams to be aligned
+ * @param alignment vertical alignment of the diagrams
+ * alignment can be 'top', 'center', or 'bottom'
+ * @returns array of aligned diagrams
+ */
+declare function align_vertical(diagrams: Diagram[], alignment?: VerticalAlignment): Diagram;
+/**
+ * Align diagrams horizontally
+ * @param diagrams diagrams to be aligned
+ * @param alignment horizontal alignment of the diagrams
+ * alignment can be 'left', 'center', or 'right'
+ * @returns array of aligned diagrams
+ */
+declare function align_horizontal(diagrams: Diagram[], alignment?: HorizontalAlignment): Diagram;
+/**
+ * Distribute diagrams horizontally
+ * @param diagrams diagrams to be distributed
+ * @param space space between the diagrams (default = 0)
+ * @returns array of distributed diagrams
+ */
+declare function distribute_horizontal(diagrams: Diagram[], space?: number): Diagram;
+/**
+ * Distribute diagrams vertically
+ * @param diagrams diagrams to be distributed
+ * @param space space between the diagrams (default = 0)
+ * @returns array of distributed diagrams
+ */
+declare function distribute_vertical(diagrams: Diagram[], space?: number): Diagram;
+/**
+ * Distribute diagrams horizontally and align
+ * @param diagrams diagrams to be distributed
+ * @param horizontal_space space between the diagrams (default = 0)
+ * @param alignment vertical alignment of the diagrams
+ * alignment can be 'top', 'center', or 'bottom'
+ * @returns array of distributed and aligned diagrams
+ */
+declare function distribute_horizontal_and_align(diagrams: Diagram[], horizontal_space?: number, alignment?: VerticalAlignment): Diagram;
+/**
+ * Distribute diagrams vertically and align
+ * @param diagrams diagrams to be distributed
+ * @param vertical_space space between the diagrams (default = 0)
+ * @param alignment horizontal alignment of the diagrams
+ * alignment can be 'left', 'center', or 'right'
+ * @returns array of distributed and aligned diagrams
+ */
+declare function distribute_vertical_and_align(diagrams: Diagram[], vertical_space?: number, alignment?: HorizontalAlignment): Diagram;
+/**
+ * Distribute diagrams in a grid
+ * @param diagrams diagrams to be distributed
+ * @param column_count number of columns
+ * @param vectical_space space between the diagrams vertically (default = 0)
+ * @param horizontal_space space between the diagrams horizontally (default = 0)
+ * NODE: the behaviour is updated in v1.3.0
+ * (now the returned diagram's children is the distributed diagrams instead of list of list of diagrams)
+ */
+declare function distribute_grid_row(diagrams: Diagram[], column_count: number, vectical_space?: number, horizontal_space?: number): Diagram;
+/**
+ * Distribute diagrams in a variable width row
+ * if there is a diagram that is wider than the container width, it will be placed in a separate row
+ * @param diagrams diagrams to be distributed
+ * @param container_width width of the container
+ * @param vertical_space space between the diagrams vertically (default = 0)
+ * @param horizontal_space space between the diagrams horizontally (default = 0)
+ * @param vertical_alignment vertical alignment of the diagrams (default = 'center')
+ * alignment can be 'top', 'center', or 'bottom'
+ * @param horizontal_alignment horizontal alignment of the diagrams (default = 'left')
+ * alignment can be 'left', 'center', or 'right'
+ */
+declare function distribute_variable_row(diagrams: Diagram[], container_width: number, vertical_space?: number, horizontal_space?: number, vertical_alignment?: VerticalAlignment, horizontal_alignment?: HorizontalAlignment): Diagram;
+
+type formatFunction = (name: string, value: any, prec?: number) => string;
+type setter_function_t = (_: any) => void;
+type inpVariables_t = {
+    [key: string]: any;
+};
+type inpSetter_t = {
+    [key: string]: setter_function_t;
+};
+declare enum HTML_INT_TARGET {
+    DOCUMENT = "document",
+    SVG = "svg"
+}
+/**
+ * Object that controls the interactivity of the diagram
+ */
+declare class Interactive {
+    control_container_div: HTMLElement;
+    diagram_outer_svg?: SVGSVGElement | undefined;
+    event_target: HTML_INT_TARGET;
+    inp_variables: inpVariables_t;
+    inp_setter: inpSetter_t;
+    display_mode: "svg" | "canvas";
+    diagram_svg: SVGSVGElement | undefined;
+    locator_svg: SVGSVGElement | undefined;
+    dnd_svg: SVGSVGElement | undefined;
+    custom_svg: SVGSVGElement | undefined;
+    button_svg: SVGSVGElement | undefined;
+    private locatorHandler?;
+    private dragAndDropHandler?;
+    private buttonHandler?;
+    private focus_padding;
+    draw_function: (inp_object: inpVariables_t, setter_object?: inpSetter_t) => any;
+    display_precision: undefined | number;
+    intervals: {
+        [key: string]: any;
+    };
+    registeredEventListenerRemoveFunctions: (() => void)[];
+    single_int_mode: boolean;
+    /**
+     * @param control_container_div the div that contains the control elements
+     * @param diagram_outer_svg the svg element that contains the diagram
+     * \* _only needed if you want to use the locator_
+     * @param inp_object_ the object that contains the variables
+     * \* _only needed if you want to use custom input object_
+     */
+    constructor(control_container_div: HTMLElement, diagram_outer_svg?: SVGSVGElement | undefined, inp_object_?: {
+        [key: string]: any;
+    }, event_target?: HTML_INT_TARGET);
+    draw(): void;
+    set(variable_name: string, val: any): void;
+    get(variable_name: string): any;
+    label(variable_name: string, value: any, display_format_func?: formatFunction, color?: string, markType?: "square" | "circle", markColor?: string, display?: boolean): void;
+    /**
+     * WARNING: deprecated
+     * use `locator_initial_draw` instead
+     */
+    locator_draw(): void;
+    locator_initial_draw(): void;
+    /**
+     * alias for `dnd_initial_draw`
+     */
+    drag_and_drop_initial_draw(): void;
+    dnd_initial_draw(): void;
+    private registerEventListener;
+    removeRegisteredEventListener(): void;
+    get_svg_element(metaname: string, force_recreate?: boolean): SVGSVGElement;
+    get_diagram_svg(): SVGSVGElement;
+    isTargetingDocument(): boolean;
+    set_focus_padding(padding: number): void;
+    /**
+     * Create a locator
+     * Locator is a draggable object that contain 2D coordinate information
+     * @param variable_name name of the variable
+     * @param value initial value
+     * @param radius radius of the locator draggable object
+     * @param color color of the locator
+     * @param track_diagram if provided, the locator will snap to the closest point on the diagram
+     */
+    locator(variable_name: string, value: Vector2, radius: number, color?: string, track_diagram?: Diagram, blink?: boolean, callback?: (locator_name: string, position: Vector2) => any): void;
+    /**
+     * Create a locator with custom diagram object
+     * @param variable_name name of the variable
+     * @param value initial value
+     * @param diagram diagram of the locator
+     * @param track_diagram if provided, the locator will snap to the closest point on the diagram
+     * @param blink if true, the locator will blink
+     * @param callback callback function that will be called when the locator is moved
+     * @param callback_rightclick callback function that will be called when the locator is right clicked
+     */
+    locator_custom(variable_name: string, value: Vector2, diagram: Diagram, track_diagram?: Diagram, blink?: boolean, callback?: (locator_name: string, position: Vector2) => any, callback_rightclick?: (locator_name: string) => any): void;
+    /**
+     * Create a slider
+     * @param variable_name name of the variable
+     * @param min minimum value
+     * @param max maximum value
+     * @param value initial value
+     * @param step step size
+     * @param time time of the animation in milliseconds
+     * @param display_format_func function to format the display of the value
+     */
+    slider(variable_name: string, min?: number, max?: number, value?: number, step?: number, time?: number, display_format_func?: formatFunction): void;
+    private init_drag_and_drop;
+    /**
+     * Create a drag and drop container
+     * @param name name of the container
+     * @param diagram diagram of the container
+     * @param capacity capacity of the container (default is 1)
+     * @param config configuration of the container positioning
+     * the configuration is an object with the following format:
+     * `{type:"horizontal-uniform"}`, `{type:"vertical-uniform"}`, `{type:"grid", value:[number, number]}`
+     * `{type:"horizontal", padding:number}`, `{type:"vertical", padding:number}`
+     * `{type:"flex-row", padding:number, vertical_alignment:VerticalAlignment, horizontal_alignment:HorizontalAlignment}`
+     *
+     * you can also add custom region box for the target by adding `custom_region_box: [Vector2, Vector2]` in the config
+     *
+     * you can also add a sorting function for the target by adding `sorting_function: (a: string, b: string) => number`
+     */
+    dnd_container(name: string, diagram: Diagram, capacity?: number, config?: dnd_container_config): void;
+    /**
+     * Create a drag and drop draggable that is positioned into an existing container
+     * @param name name of the draggable
+     * @param diagram diagram of the draggable
+     * @param container_name name of the container
+     * @param callback callback function (called after the draggable is moved)
+     * @param onclickstart_callback callback function (called at the start of the drag)
+     */
+    dnd_draggable_to_container(name: string, diagram: Diagram, container_name: string, callback?: (name: string, container: string) => any, onclickstart_callback?: () => any): void;
+    /**
+     * Create a drag and drop draggable
+     * @param name name of the draggable
+     * @param diagram diagram of the draggable
+     * @param container_diagram diagram of the container, if not provided, a container will be created automatically
+     * @param callback callback function (called after the draggable is moved)
+     * @param onclickstart_callback callback function (called at the start of the drag)
+     */
+    dnd_draggable(name: string, diagram: Diagram, container_diagram?: Diagram, callback?: (name: string, pos: Vector2) => any, onclickstart_callback?: () => any): void;
+    /**
+     * Register a callback function when a draggable is dropped outside of a container
+     * @param callback callback function
+     */
+    dnd_register_drop_outside_callback(callback: (name: string) => any): void;
+    /**
+     * Register a validation function when a draggable is moved to a container
+     * If the function return false, the draggable will not be moved
+     * @param fun validation function
+     */
+    dnd_register_move_validation_function(fun: (draggable_name: string, target_name: string) => boolean): void;
+    /**
+     * Move a draggable to a container
+     * @param name name of the draggable
+     * @param container_name name of the container
+     */
+    dnd_move_to_container(name: string, container_name: string): void;
+    /**
+     * Get the data of the drag and drop objects with the format:
+     * `{container:string, content:string[]}[]`
+     */
+    get_dnd_data(): DragAndDropData;
+    /**
+     * Set the data of the drag and drop objects with the format:
+     * `{container:string, content:string[]}[]`
+     */
+    set_dnd_data(data: DragAndDropData): void;
+    /**
+     * reorder the tabindex of the containers
+     * @param container_names
+     */
+    dnd_reorder_tabindex(container_names: string[]): void;
+    /**
+     * Get the content size of a container
+     */
+    get_dnd_container_content_size(container_name: string): [number, number];
+    /**
+     * Set whether the content of the container should be sorted or not
+     */
+    set_dnd_content_sort(sort_content: boolean): void;
+    remove_dnd_draggable(name: string): void;
+    remove_locator(name: string): void;
+    remove_button(name: string): void;
+    /**
+     * @deprecated (use `Interactive.custom_object_g()` instead)
+     * This method will be removed in the next major release
+     *
+     * Create a custom interactive object
+     * @param id id of the object
+     * @param classlist list of classes of the object
+     * @param diagram diagram of the object
+     * @returns the svg element of the object
+     */
+    custom_object(id: string, classlist: string[], diagram: Diagram): SVGSVGElement;
+    /**
+     * Create a custom interactive object
+     * @param id id of the object
+     * @param classlist list of classes of the object
+     * @param diagram diagram of the object
+     * @returns the <g> svg element of the object
+     */
+    custom_object_g(id: string, classlist: string[], diagram: Diagram): SVGGElement;
+    private init_button;
+    /**
+     * Create a toggle button
+     * @param name name of the button
+     * @param diagram_on diagram of the button when it is on
+     * @param diagram_off diagram of the button when it is off
+     * @param state initial state of the button
+     * @param callback callback function when the button state is changed
+     */
+    button_toggle(name: string, diagram_on: Diagram, diagram_off: Diagram, state?: boolean, callback?: (name: string, state: boolean) => any): void;
+    /**
+     * Create a click button
+     * @param name name of the button
+     * @param diagram diagram of the button
+     * @param diagram_pressed diagram of the button when it is pressed
+     * @param callback callback function when the button is clicked
+     */
+    button_click(name: string, diagram: Diagram, diagram_pressed: Diagram, callback: () => any): void;
+    /**
+     * Create a click button
+     * @param name name of the button
+     * @param diagram diagram of the button
+     * @param diagram_pressed diagram of the button when it is pressed
+     * @param diagram_hover diagram of the button when it is hovered
+     * @param callback callback function when the button is clicked
+     */
+    button_click_hover(name: string, diagram: Diagram, diagram_pressed: Diagram, diagram_hover: Diagram, callback: () => any): void;
+}
+type LocatorEvent = TouchEvent | Touch | MouseEvent;
+/**
+ * Convert client position to SVG position
+ * @param clientPos the client position
+ * @param svgelem the svg element
+ */
+declare function clientPos_to_svgPos(clientPos: {
+    x: number;
+    y: number;
+}, svgelem: SVGSVGElement): {
+    x: number;
+    y: number;
+};
+/**
+ * Get the SVG coordinate from the event (MouseEvent or TouchEvent)
+ * @param evt the event
+ * @param svgelem the svg element
+ * @returns the SVG coordinate
+ */
+declare function get_SVGPos_from_event(evt: LocatorEvent, svgelem: SVGSVGElement): {
+    x: number;
+    y: number;
+};
+type DragAndDropData = {
+    container: string;
+    content: string[];
+}[];
+type dnd_container_positioning_type = {
+    type: "horizontal-uniform";
+} | {
+    type: "vertical-uniform";
+} | {
+    type: "horizontal";
+    padding: number;
+} | {
+    type: "vertical";
+    padding: number;
+} | {
+    type: "flex-row";
+    padding: number;
+    vertical_alignment?: VerticalAlignment;
+    horizontal_alignment?: HorizontalAlignment;
+} | {
+    type: "grid";
+    value: [number, number];
+};
+type dnd_container_config = dnd_container_positioning_type & {
+    custom_region_box?: [Vector2, Vector2];
+    sorting_function?: (a: string, b: string) => number;
+};
+
+/**
+ * content elements are muatable
+ * becuase dom itself inhernetly mutable
+ *
+ */
+interface ContentElement {
+    id: string;
+    type: string;
+    appendTo(container: HTMLDivElement): void;
+    getElement(): Element;
+    getSubElements?(): ContentElement[];
+}
+declare class Content {
+    private elements;
+    private elementMap;
+    private nextId;
+    private contentDiv;
+    constructor(contentDiv: HTMLDivElement);
+    private generateId;
+    add(element: ContentElement): this;
+    private addElementRecursively;
+    getAllElements(): ContentElement[];
+    getElement(id: string): ContentElement | undefined;
+    static CombineELements(parenElement: HTMLDivElement, ...elemeents: ContentElement[]): HTMLDivElement;
+}
+declare class Drawing implements ContentElement {
+    width: number;
+    height: number;
+    id: string;
+    readonly type: string;
+    private element;
+    drawingContainer: HTMLDivElement | null;
+    private callbacks;
+    constructor(width: number, height: number);
+    appendTo(container: HTMLDivElement): void;
+    init(): {
+        draw: (...diagrams: any) => void;
+        int: Interactive;
+    } | undefined;
+    getElement(): SVGSVGElement;
+    private attachEventListeners;
+    emit(eventName: string): void;
+    on(eventName: string, callback: Function): void;
+}
+declare class Paragraph implements ContentElement {
+    text: string;
+    id: string;
+    readonly type: string;
+    private element;
+    private callbacks;
+    constructor(text: string);
+    private attachEventListeners;
+    appendTo(container: HTMLDivElement): void;
+    getElement(): HTMLParagraphElement;
+    emit(eventName: string): void;
+    on(eventName: string, callback: Function): void;
+}
+declare class Header implements ContentElement {
+    text: string;
+    level: number;
+    id: string;
+    readonly type: string;
+    private element;
+    private callbacks;
+    constructor(text: string, level: number);
+    appendTo(container: HTMLDivElement): void;
+    getElement(): HTMLElement;
+    private attachEventListeners;
+    emit(eventName: string): void;
+    on(eventName: string, callback: Function): void;
+}
+declare class Banner implements ContentElement {
+    title: string;
+    url: string;
+    color: string;
+    width: number;
+    height?: number | undefined;
+    id: string;
+    readonly type: string;
+    private element;
+    constructor(title: string, url: string, color: string, width: number, height?: number | undefined);
+    appendTo(container: HTMLDivElement): void;
+    getElement(): HTMLDivElement;
+}
+declare class Markup implements ContentElement {
+    content: string;
+    id: string;
+    readonly type: string;
+    private element;
+    private callbacks;
+    constructor(content: string);
+    appendTo(container: HTMLDivElement): void;
+    getElement(): Element;
+    private attachEventListeners;
+    private processContent;
+    emit(eventName: string): void;
+    on(eventName: string, callback: Function): void;
+}
+declare class Image implements ContentElement {
+    src: string;
+    width: number;
+    height?: number | undefined;
+    type: string;
+    id: string;
+    element: HTMLImageElement;
+    constructor(src: string, width: number, height?: number | undefined);
+    appendTo(container: HTMLDivElement): void;
+    getElement(): Element;
+}
+
 /**
  * Helper function to convert from degrees to radians
  */
@@ -689,7 +1150,7 @@ declare function arrow1(start: Vector2, end: Vector2, headsize?: number): Diagra
  * @param headsize size of the arrow head
  * @returns a Diagram object
  */
-declare function arrow2(start: Vector2, end: Vector2, headsize?: number): Diagram;
+declare function arrow2$1(start: Vector2, end: Vector2, headsize?: number): Diagram;
 /**
  * Create a text object with mathematical italic font
  * @param str text to be displayed
@@ -697,359 +1158,8 @@ declare function arrow2(start: Vector2, end: Vector2, headsize?: number): Diagra
  */
 declare function textvar(str: string): Diagram;
 
-type VerticalAlignment = 'top' | 'center' | 'bottom';
-type HorizontalAlignment = 'left' | 'center' | 'right';
-/**
- * Align diagrams vertically
- * @param diagrams diagrams to be aligned
- * @param alignment vertical alignment of the diagrams
- * alignment can be 'top', 'center', or 'bottom'
- * @returns array of aligned diagrams
- */
-declare function align_vertical(diagrams: Diagram[], alignment?: VerticalAlignment): Diagram;
-/**
- * Align diagrams horizontally
- * @param diagrams diagrams to be aligned
- * @param alignment horizontal alignment of the diagrams
- * alignment can be 'left', 'center', or 'right'
- * @returns array of aligned diagrams
- */
-declare function align_horizontal(diagrams: Diagram[], alignment?: HorizontalAlignment): Diagram;
-/**
- * Distribute diagrams horizontally
- * @param diagrams diagrams to be distributed
- * @param space space between the diagrams (default = 0)
- * @returns array of distributed diagrams
- */
-declare function distribute_horizontal(diagrams: Diagram[], space?: number): Diagram;
-/**
- * Distribute diagrams vertically
- * @param diagrams diagrams to be distributed
- * @param space space between the diagrams (default = 0)
- * @returns array of distributed diagrams
- */
-declare function distribute_vertical(diagrams: Diagram[], space?: number): Diagram;
-/**
- * Distribute diagrams horizontally and align
- * @param diagrams diagrams to be distributed
- * @param horizontal_space space between the diagrams (default = 0)
- * @param alignment vertical alignment of the diagrams
- * alignment can be 'top', 'center', or 'bottom'
- * @returns array of distributed and aligned diagrams
- */
-declare function distribute_horizontal_and_align(diagrams: Diagram[], horizontal_space?: number, alignment?: VerticalAlignment): Diagram;
-/**
- * Distribute diagrams vertically and align
- * @param diagrams diagrams to be distributed
- * @param vertical_space space between the diagrams (default = 0)
- * @param alignment horizontal alignment of the diagrams
- * alignment can be 'left', 'center', or 'right'
- * @returns array of distributed and aligned diagrams
- */
-declare function distribute_vertical_and_align(diagrams: Diagram[], vertical_space?: number, alignment?: HorizontalAlignment): Diagram;
-/**
- * Distribute diagrams in a grid
- * @param diagrams diagrams to be distributed
- * @param column_count number of columns
- * @param vectical_space space between the diagrams vertically (default = 0)
- * @param horizontal_space space between the diagrams horizontally (default = 0)
- * NODE: the behaviour is updated in v1.3.0
- * (now the returned diagram's children is the distributed diagrams instead of list of list of diagrams)
- */
-declare function distribute_grid_row(diagrams: Diagram[], column_count: number, vectical_space?: number, horizontal_space?: number): Diagram;
-/**
- * Distribute diagrams in a variable width row
- * if there is a diagram that is wider than the container width, it will be placed in a separate row
- * @param diagrams diagrams to be distributed
- * @param container_width width of the container
- * @param vertical_space space between the diagrams vertically (default = 0)
- * @param horizontal_space space between the diagrams horizontally (default = 0)
- * @param vertical_alignment vertical alignment of the diagrams (default = 'center')
- * alignment can be 'top', 'center', or 'bottom'
- * @param horizontal_alignment horizontal alignment of the diagrams (default = 'left')
- * alignment can be 'left', 'center', or 'right'
- */
-declare function distribute_variable_row(diagrams: Diagram[], container_width: number, vertical_space?: number, horizontal_space?: number, vertical_alignment?: VerticalAlignment, horizontal_alignment?: HorizontalAlignment): Diagram;
-
 declare function str_latex_to_unicode(str: string): string;
 declare function str_to_mathematical_italic(str: string): string;
-
-type formatFunction = (name: string, value: any, prec?: number) => string;
-type setter_function_t = (_: any) => void;
-type inpVariables_t = {
-    [key: string]: any;
-};
-type inpSetter_t = {
-    [key: string]: setter_function_t;
-};
-declare enum HTML_INT_TARGET {
-    DOCUMENT = "document",
-    SVG = "svg"
-}
-/**
- * Object that controls the interactivity of the diagram
- */
-declare class Interactive {
-    control_container_div: HTMLElement;
-    diagram_outer_svg?: SVGSVGElement | undefined;
-    event_target: HTML_INT_TARGET;
-    inp_variables: inpVariables_t;
-    inp_setter: inpSetter_t;
-    display_mode: "svg" | "canvas";
-    diagram_svg: SVGSVGElement | undefined;
-    locator_svg: SVGSVGElement | undefined;
-    dnd_svg: SVGSVGElement | undefined;
-    custom_svg: SVGSVGElement | undefined;
-    button_svg: SVGSVGElement | undefined;
-    private locatorHandler?;
-    private dragAndDropHandler?;
-    private buttonHandler?;
-    private focus_padding;
-    draw_function: (inp_object: inpVariables_t, setter_object?: inpSetter_t) => any;
-    display_precision: undefined | number;
-    intervals: {
-        [key: string]: any;
-    };
-    registeredEventListenerRemoveFunctions: (() => void)[];
-    single_int_mode: boolean;
-    /**
-     * @param control_container_div the div that contains the control elements
-     * @param diagram_outer_svg the svg element that contains the diagram
-     * \* _only needed if you want to use the locator_
-     * @param inp_object_ the object that contains the variables
-     * \* _only needed if you want to use custom input object_
-     */
-    constructor(control_container_div: HTMLElement, diagram_outer_svg?: SVGSVGElement | undefined, inp_object_?: {
-        [key: string]: any;
-    }, event_target?: HTML_INT_TARGET);
-    draw(): void;
-    set(variable_name: string, val: any): void;
-    get(variable_name: string): any;
-    label(variable_name: string, value: any, display_format_func?: formatFunction): void;
-    /**
-     * WARNING: deprecated
-     * use `locator_initial_draw` instead
-     */
-    locator_draw(): void;
-    locator_initial_draw(): void;
-    /**
-     * alias for `dnd_initial_draw`
-     */
-    drag_and_drop_initial_draw(): void;
-    dnd_initial_draw(): void;
-    private registerEventListener;
-    removeRegisteredEventListener(): void;
-    get_svg_element(metaname: string, force_recreate?: boolean): SVGSVGElement;
-    get_diagram_svg(): SVGSVGElement;
-    isTargetingDocument(): boolean;
-    set_focus_padding(padding: number): void;
-    /**
-     * Create a locator
-     * Locator is a draggable object that contain 2D coordinate information
-     * @param variable_name name of the variable
-     * @param value initial value
-     * @param radius radius of the locator draggable object
-     * @param color color of the locator
-     * @param track_diagram if provided, the locator will snap to the closest point on the diagram
-     */
-    locator(variable_name: string, value: Vector2, radius: number, color?: string, track_diagram?: Diagram, blink?: boolean, callback?: (locator_name: string, position: Vector2) => any): void;
-    /**
-     * Create a locator with custom diagram object
-     * @param variable_name name of the variable
-     * @param value initial value
-     * @param diagram diagram of the locator
-     * @param track_diagram if provided, the locator will snap to the closest point on the diagram
-     * @param blink if true, the locator will blink
-     * @param callback callback function that will be called when the locator is moved
-     * @param callback_rightclick callback function that will be called when the locator is right clicked
-     */
-    locator_custom(variable_name: string, value: Vector2, diagram: Diagram, track_diagram?: Diagram, blink?: boolean, callback?: (locator_name: string, position: Vector2) => any, callback_rightclick?: (locator_name: string) => any): void;
-    /**
-     * Create a slider
-     * @param variable_name name of the variable
-     * @param min minimum value
-     * @param max maximum value
-     * @param value initial value
-     * @param step step size
-     * @param time time of the animation in milliseconds
-     * @param display_format_func function to format the display of the value
-    */
-    slider(variable_name: string, min?: number, max?: number, value?: number, step?: number, time?: number, display_format_func?: formatFunction): void;
-    private init_drag_and_drop;
-    /**
-     * Create a drag and drop container
-     * @param name name of the container
-     * @param diagram diagram of the container
-     * @param capacity capacity of the container (default is 1)
-     * @param config configuration of the container positioning
-     * the configuration is an object with the following format:
-     * `{type:"horizontal-uniform"}`, `{type:"vertical-uniform"}`, `{type:"grid", value:[number, number]}`
-     * `{type:"horizontal", padding:number}`, `{type:"vertical", padding:number}`
-     * `{type:"flex-row", padding:number, vertical_alignment:VerticalAlignment, horizontal_alignment:HorizontalAlignment}`
-     *
-     * you can also add custom region box for the target by adding `custom_region_box: [Vector2, Vector2]` in the config
-     *
-     * you can also add a sorting function for the target by adding `sorting_function: (a: string, b: string) => number`
-    */
-    dnd_container(name: string, diagram: Diagram, capacity?: number, config?: dnd_container_config): void;
-    /**
-     * Create a drag and drop draggable that is positioned into an existing container
-     * @param name name of the draggable
-     * @param diagram diagram of the draggable
-     * @param container_name name of the container
-     * @param callback callback function (called after the draggable is moved)
-     * @param onclickstart_callback callback function (called at the start of the drag)
-     */
-    dnd_draggable_to_container(name: string, diagram: Diagram, container_name: string, callback?: (name: string, container: string) => any, onclickstart_callback?: () => any): void;
-    /**
-     * Create a drag and drop draggable
-     * @param name name of the draggable
-     * @param diagram diagram of the draggable
-     * @param container_diagram diagram of the container, if not provided, a container will be created automatically
-     * @param callback callback function (called after the draggable is moved)
-     * @param onclickstart_callback callback function (called at the start of the drag)
-    */
-    dnd_draggable(name: string, diagram: Diagram, container_diagram?: Diagram, callback?: (name: string, pos: Vector2) => any, onclickstart_callback?: () => any): void;
-    /**
-     * Register a callback function when a draggable is dropped outside of a container
-     * @param callback callback function
-     */
-    dnd_register_drop_outside_callback(callback: (name: string) => any): void;
-    /**
-     * Register a validation function when a draggable is moved to a container
-     * If the function return false, the draggable will not be moved
-     * @param fun validation function
-    */
-    dnd_register_move_validation_function(fun: (draggable_name: string, target_name: string) => boolean): void;
-    /**
-     * Move a draggable to a container
-     * @param name name of the draggable
-     * @param container_name name of the container
-     */
-    dnd_move_to_container(name: string, container_name: string): void;
-    /**
-     * Get the data of the drag and drop objects with the format:
-     * `{container:string, content:string[]}[]`
-    */
-    get_dnd_data(): DragAndDropData;
-    /**
-     * Set the data of the drag and drop objects with the format:
-     * `{container:string, content:string[]}[]`
-     */
-    set_dnd_data(data: DragAndDropData): void;
-    /**
-    * reorder the tabindex of the containers
-    * @param container_names
-    */
-    dnd_reorder_tabindex(container_names: string[]): void;
-    /**
-    * Get the content size of a container
-    */
-    get_dnd_container_content_size(container_name: string): [number, number];
-    /**
-     * Set whether the content of the container should be sorted or not
-     */
-    set_dnd_content_sort(sort_content: boolean): void;
-    remove_dnd_draggable(name: string): void;
-    remove_locator(name: string): void;
-    remove_button(name: string): void;
-    /**
-     * @deprecated (use `Interactive.custom_object_g()` instead)
-     * This method will be removed in the next major release
-     *
-     * Create a custom interactive object
-     * @param id id of the object
-     * @param classlist list of classes of the object
-     * @param diagram diagram of the object
-     * @returns the svg element of the object
-     */
-    custom_object(id: string, classlist: string[], diagram: Diagram): SVGSVGElement;
-    /**
-     * Create a custom interactive object
-     * @param id id of the object
-     * @param classlist list of classes of the object
-     * @param diagram diagram of the object
-     * @returns the <g> svg element of the object
-     */
-    custom_object_g(id: string, classlist: string[], diagram: Diagram): SVGGElement;
-    private init_button;
-    /**
-     * Create a toggle button
-     * @param name name of the button
-     * @param diagram_on diagram of the button when it is on
-     * @param diagram_off diagram of the button when it is off
-     * @param state initial state of the button
-     * @param callback callback function when the button state is changed
-    */
-    button_toggle(name: string, diagram_on: Diagram, diagram_off: Diagram, state?: boolean, callback?: (name: string, state: boolean) => any): void;
-    /**
-     * Create a click button
-     * @param name name of the button
-     * @param diagram diagram of the button
-     * @param diagram_pressed diagram of the button when it is pressed
-     * @param callback callback function when the button is clicked
-    */
-    button_click(name: string, diagram: Diagram, diagram_pressed: Diagram, callback: () => any): void;
-    /**
-     * Create a click button
-     * @param name name of the button
-     * @param diagram diagram of the button
-     * @param diagram_pressed diagram of the button when it is pressed
-     * @param diagram_hover diagram of the button when it is hovered
-     * @param callback callback function when the button is clicked
-    */
-    button_click_hover(name: string, diagram: Diagram, diagram_pressed: Diagram, diagram_hover: Diagram, callback: () => any): void;
-}
-type LocatorEvent = TouchEvent | Touch | MouseEvent;
-/**
- * Convert client position to SVG position
- * @param clientPos the client position
- * @param svgelem the svg element
- */
-declare function clientPos_to_svgPos(clientPos: {
-    x: number;
-    y: number;
-}, svgelem: SVGSVGElement): {
-    x: number;
-    y: number;
-};
-/**
- * Get the SVG coordinate from the event (MouseEvent or TouchEvent)
- * @param evt the event
- * @param svgelem the svg element
- * @returns the SVG coordinate
- */
-declare function get_SVGPos_from_event(evt: LocatorEvent, svgelem: SVGSVGElement): {
-    x: number;
-    y: number;
-};
-type DragAndDropData = {
-    container: string;
-    content: string[];
-}[];
-type dnd_container_positioning_type = {
-    type: "horizontal-uniform";
-} | {
-    type: "vertical-uniform";
-} | {
-    type: "horizontal";
-    padding: number;
-} | {
-    type: "vertical";
-    padding: number;
-} | {
-    type: "flex-row";
-    padding: number;
-    vertical_alignment?: VerticalAlignment;
-    horizontal_alignment?: HorizontalAlignment;
-} | {
-    type: "grid";
-    value: [number, number];
-};
-type dnd_container_config = dnd_container_positioning_type & {
-    custom_region_box?: [Vector2, Vector2];
-    sorting_function?: (a: string, b: string) => number;
-};
 
 type modifierFunction = (d: Diagram) => Diagram;
 /**
@@ -1793,6 +1903,21 @@ declare namespace shapes_curves {
   export { shapes_curves_bezier_cubic as bezier_cubic, shapes_curves_bezier_quadratic as bezier_quadratic, shapes_curves_cubic_spline as cubic_spline, shapes_curves_curve_combine as curve_combine, shapes_curves_interpolate_cubic_spline as interpolate_cubic_spline };
 }
 
+declare function arrowHead(headsize: number): Diagram;
+declare function arrow2(size: number, headsize: number, color: string): Diagram;
+declare function verticalLocator(radius?: number, fill?: string, color?: string, headsize?: number): Diagram;
+declare function horizontalLocator(radius?: number, fill?: string, color?: string, headsize?: number): Diagram;
+declare function spanLocator(radius?: number, fill?: string, color?: string, headsize?: number): Diagram;
+
+declare const shapes_interactive_arrow2: typeof arrow2;
+declare const shapes_interactive_arrowHead: typeof arrowHead;
+declare const shapes_interactive_horizontalLocator: typeof horizontalLocator;
+declare const shapes_interactive_spanLocator: typeof spanLocator;
+declare const shapes_interactive_verticalLocator: typeof verticalLocator;
+declare namespace shapes_interactive {
+  export { shapes_interactive_arrow2 as arrow2, shapes_interactive_arrowHead as arrowHead, shapes_interactive_horizontalLocator as horizontalLocator, shapes_interactive_spanLocator as spanLocator, shapes_interactive_verticalLocator as verticalLocator };
+}
+
 declare function encode(s: string): string;
 declare function decode(s: string): string;
 
@@ -1802,4 +1927,4 @@ declare namespace encoding {
   export { encoding_decode as decode, encoding_encode as encode };
 }
 
-export { Diagram, Interactive, Path, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2, ax, axes_corner_empty, axes_empty, type axes_options, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, type draw_to_svg_options, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
+export { Banner, Content, Diagram, Drawing, Header, Image, Interactive, Markup, Paragraph, Path, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, type axes_options, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, type draw_to_svg_options, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
