@@ -24647,7 +24647,9 @@ function format_number(val, prec) {
     return fixed.replace(/\.?0+$/, "");
 }
 const defaultFormat_f = (name, val, prec) => {
-    let val_str = (typeof val == 'number' && prec != undefined) ? format_number(val, prec) : val.toString();
+    let val_str = typeof val == "number" && prec != undefined
+        ? format_number(val, prec)
+        : val.toString();
     return `${str_to_mathematical_italic(name)} = ${val_str}`;
 };
 var control_svg_name;
@@ -24714,22 +24716,22 @@ class Interactive {
     get(variable_name) {
         return this.inp_variables[variable_name];
     }
-    label(variable_name, value, display = true, color = 'white', markType = 'square', markColor = '#8B5CF6', display_format_func = defaultFormat_f) {
-        let containerDiv = document.createElement('div');
+    label(variable_name, value, display_format_func = defaultFormat_f, color = "white", markType = "square", markColor = "#8B5CF6", display = true) {
+        let containerDiv = document.createElement("div");
         containerDiv.classList.add("diagramatics-label-container");
-        containerDiv.style.display = display ? 'flex' : "none";
-        containerDiv.style.alignItems = 'center';
-        containerDiv.style.justifyContent = 'center';
-        containerDiv.style.gap = '8px';
-        let markDiv = document.createElement('div');
+        containerDiv.style.display = display ? "flex" : "none";
+        containerDiv.style.alignItems = "center";
+        containerDiv.style.justifyContent = "center";
+        containerDiv.style.gap = "8px";
+        let markDiv = document.createElement("div");
         markDiv.classList.add("diagramatics-label-mark");
-        markDiv.style.width = '12px';
-        markDiv.style.height = '12px';
+        markDiv.style.width = "12px";
+        markDiv.style.height = "12px";
         markDiv.style.backgroundColor = markColor;
-        if (markType === 'circle') {
-            markDiv.style.borderRadius = '50%';
+        if (markType === "circle") {
+            markDiv.style.borderRadius = "50%";
         }
-        let labeldiv = document.createElement('div');
+        let labeldiv = document.createElement("div");
         labeldiv.classList.add("diagramatics-label");
         labeldiv.style.textAlign = "center";
         labeldiv.innerHTML = display_format_func(variable_name, value, this.display_precision);
@@ -24749,7 +24751,7 @@ class Interactive {
         // <div class="diagramatics-label-container">
         //     <div class="diagramatics-label"></div>
         // </div>
-        let container = document.createElement('div');
+        let container = document.createElement("div");
         container.classList.add("diagramatics-label-container");
         container.appendChild(containerDiv);
         this.control_container_div.appendChild(container);
@@ -24784,7 +24786,7 @@ class Interactive {
         this.registeredEventListenerRemoveFunctions.push(removeFunction);
     }
     removeRegisteredEventListener() {
-        this.registeredEventListenerRemoveFunctions.forEach(f => f());
+        this.registeredEventListenerRemoveFunctions.forEach((f) => f());
         this.registeredEventListenerRemoveFunctions = [];
     }
     get_svg_element(metaname, force_recreate = false) {
@@ -24796,7 +24798,8 @@ class Interactive {
         let svg_element = undefined;
         for (let i in this.diagram_outer_svg.children) {
             let child = this.diagram_outer_svg.children[i];
-            if (child instanceof SVGSVGElement && child.getAttribute("meta") == metaname) {
+            if (child instanceof SVGSVGElement &&
+                child.getAttribute("meta") == metaname) {
                 svg_element = child;
             }
         }
@@ -24841,7 +24844,7 @@ class Interactive {
      * @param color color of the locator
      * @param track_diagram if provided, the locator will snap to the closest point on the diagram
      */
-    locator(variable_name, value, radius, color = 'blue', track_diagram, blink = true, callback) {
+    locator(variable_name, value, radius, color = "blue", track_diagram, blink = true, callback) {
         if (this.diagram_outer_svg == undefined)
             throw Error("diagram_outer_svg in Interactive class is undefined");
         this.inp_variables[variable_name] = value;
@@ -24852,12 +24855,24 @@ class Interactive {
         if (this.locatorHandler == undefined) {
             let locatorHandler = new LocatorHandler(control_svg, diagram_svg);
             this.locatorHandler = locatorHandler;
-            const eventTarget = this.isTargetingDocument() ? document : this.diagram_outer_svg;
-            this.registerEventListener(eventTarget, 'mousemove', (evt) => { locatorHandler.drag(evt); });
-            this.registerEventListener(eventTarget, 'mouseup', (evt) => { locatorHandler.endDrag(evt); });
-            this.registerEventListener(eventTarget, 'touchmove', (evt) => { locatorHandler.drag(evt); });
-            this.registerEventListener(eventTarget, 'touchend', (evt) => { locatorHandler.endDrag(evt); });
-            this.registerEventListener(eventTarget, 'touchcancel', (evt) => { locatorHandler.endDrag(evt); });
+            const eventTarget = this.isTargetingDocument()
+                ? document
+                : this.diagram_outer_svg;
+            this.registerEventListener(eventTarget, "mousemove", (evt) => {
+                locatorHandler.drag(evt);
+            });
+            this.registerEventListener(eventTarget, "mouseup", (evt) => {
+                locatorHandler.endDrag(evt);
+            });
+            this.registerEventListener(eventTarget, "touchmove", (evt) => {
+                locatorHandler.drag(evt);
+            });
+            this.registerEventListener(eventTarget, "touchend", (evt) => {
+                locatorHandler.endDrag(evt);
+            });
+            this.registerEventListener(eventTarget, "touchcancel", (evt) => {
+                locatorHandler.endDrag(evt);
+            });
         }
         // ============== callback
         const f_callback = (pos, redraw = true) => {
@@ -24876,17 +24891,18 @@ class Interactive {
             for (let i = 0; i < blinking_outers.length; i++)
                 this.locatorHandler.addBlinkingCircleOuter(blinking_outers[i]);
         }
-        this.registerEventListener(locator_svg, 'mousedown', (evt) => {
+        this.registerEventListener(locator_svg, "mousedown", (evt) => {
             this.locatorHandler.startDrag(evt, variable_name, locator_svg);
         });
-        this.registerEventListener(locator_svg, 'touchstart', (evt) => {
+        this.registerEventListener(locator_svg, "touchstart", (evt) => {
             this.locatorHandler.startDrag(evt, variable_name, locator_svg);
         });
         // =============== setter
         let setter;
         if (track_diagram) {
-            if (track_diagram.type != DiagramType.Polygon && track_diagram.type != DiagramType.Curve)
-                throw Error('Track diagram must be a polygon or curve');
+            if (track_diagram.type != DiagramType.Polygon &&
+                track_diagram.type != DiagramType.Curve)
+                throw Error("Track diagram must be a polygon or curve");
             if (track_diagram.path == undefined)
                 throw Error(`diagram {diagtam.type} must have a path`);
             let track = track_diagram.path.points;
@@ -24931,12 +24947,24 @@ class Interactive {
         if (this.locatorHandler == undefined) {
             let locatorHandler = new LocatorHandler(control_svg, diagram_svg);
             this.locatorHandler = locatorHandler;
-            const eventTarget = this.isTargetingDocument() ? document : this.diagram_outer_svg;
-            this.registerEventListener(eventTarget, 'mousemove', (evt) => { locatorHandler.drag(evt); });
-            this.registerEventListener(eventTarget, 'mouseup', (evt) => { locatorHandler.endDrag(evt); });
-            this.registerEventListener(eventTarget, 'touchmove', (evt) => { locatorHandler.drag(evt); });
-            this.registerEventListener(eventTarget, 'touchend', (evt) => { locatorHandler.endDrag(evt); });
-            this.registerEventListener(eventTarget, 'touchcancel', (evt) => { locatorHandler.endDrag(evt); });
+            const eventTarget = this.isTargetingDocument()
+                ? document
+                : this.diagram_outer_svg;
+            this.registerEventListener(eventTarget, "mousemove", (evt) => {
+                locatorHandler.drag(evt);
+            });
+            this.registerEventListener(eventTarget, "mouseup", (evt) => {
+                locatorHandler.endDrag(evt);
+            });
+            this.registerEventListener(eventTarget, "touchmove", (evt) => {
+                locatorHandler.drag(evt);
+            });
+            this.registerEventListener(eventTarget, "touchend", (evt) => {
+                locatorHandler.endDrag(evt);
+            });
+            this.registerEventListener(eventTarget, "touchcancel", (evt) => {
+                locatorHandler.endDrag(evt);
+            });
         }
         // ============== callback
         const f_callback = (pos, redraw = true) => {
@@ -24950,14 +24978,14 @@ class Interactive {
         this.locatorHandler.registerCallback(variable_name, f_callback);
         // ============== SVG element
         let locator_svg = this.locatorHandler.create_locator_diagram_svg(variable_name, diagram, blink);
-        this.registerEventListener(locator_svg, 'mousedown', (evt) => {
+        this.registerEventListener(locator_svg, "mousedown", (evt) => {
             this.locatorHandler.startDrag(evt, variable_name, locator_svg);
         });
-        this.registerEventListener(locator_svg, 'touchstart', (evt) => {
+        this.registerEventListener(locator_svg, "touchstart", (evt) => {
             this.locatorHandler.startDrag(evt, variable_name, locator_svg);
         });
         if (callback_rightclick) {
-            this.registerEventListener(locator_svg, 'contextmenu', (evt) => {
+            this.registerEventListener(locator_svg, "contextmenu", (evt) => {
                 evt.preventDefault();
                 callback_rightclick(variable_name);
             });
@@ -24965,8 +24993,9 @@ class Interactive {
         // =============== setter
         let setter;
         if (track_diagram) {
-            if (track_diagram.type != DiagramType.Polygon && track_diagram.type != DiagramType.Curve)
-                throw Error('Track diagram must be a polygon or curve');
+            if (track_diagram.type != DiagramType.Polygon &&
+                track_diagram.type != DiagramType.Curve)
+                throw Error("Track diagram must be a polygon or curve");
             if (track_diagram.path == undefined)
                 throw Error(`diagram {diagtam.type} must have a path`);
             let track = track_diagram.path.points;
@@ -24997,7 +25026,7 @@ class Interactive {
      * @param step step size
      * @param time time of the animation in milliseconds
      * @param display_format_func function to format the display of the value
-    */
+     */
     slider(variable_name, min = 0, max = 100, value = 50, step = -1, time = 1.5, display_format_func = defaultFormat_f) {
         // if the step is -1, then it is automatically calculated
         if (step == -1) {
@@ -25006,7 +25035,7 @@ class Interactive {
         // initialize the variable
         this.inp_variables[variable_name] = value;
         // =========== label =============
-        let labeldiv = document.createElement('div');
+        let labeldiv = document.createElement("div");
         labeldiv.classList.add("diagramatics-label");
         labeldiv.innerHTML = display_format_func(variable_name, value, this.display_precision);
         // =========== slider ===========
@@ -25026,9 +25055,9 @@ class Interactive {
         this.inp_setter[variable_name] = setter;
         // =========== playbutton ========
         let nstep = (max - min) / step;
-        const interval_time = 1000 * time / nstep;
-        let playbutton = document.createElement('button');
-        let symboldiv = document.createElement('div');
+        const interval_time = (1000 * time) / nstep;
+        let playbutton = document.createElement("button");
+        let symboldiv = document.createElement("div");
         symboldiv.classList.add("diagramatics-slider-playbutton-symbol");
         playbutton.appendChild(symboldiv);
         playbutton.classList.add("diagramatics-slider-playbutton");
@@ -25064,15 +25093,15 @@ class Interactive {
         //     <input type="range"class="diagramatics-slider">
         // </div>
         //
-        let leftcontainer = document.createElement('div');
+        let leftcontainer = document.createElement("div");
         leftcontainer.classList.add("diagramatics-slider-leftcontainer");
-        leftcontainer.appendChild(document.createElement('br'));
+        leftcontainer.appendChild(document.createElement("br"));
         leftcontainer.appendChild(playbutton);
-        let rightcontainer = document.createElement('div');
+        let rightcontainer = document.createElement("div");
         rightcontainer.classList.add("diagramatics-slider-rightcontainer");
         rightcontainer.appendChild(labeldiv);
         rightcontainer.appendChild(slider);
-        let container = document.createElement('div');
+        let container = document.createElement("div");
         container.classList.add("diagramatics-slider-container");
         container.appendChild(leftcontainer);
         container.appendChild(rightcontainer);
@@ -25089,13 +25118,25 @@ class Interactive {
             let dragAndDropHandler = new DragAndDropHandler(dnd_svg, diagram_svg);
             dragAndDropHandler.focus_padding = this.focus_padding;
             this.dragAndDropHandler = dragAndDropHandler;
-            const eventTarget = this.isTargetingDocument() ? document : this.diagram_outer_svg;
+            const eventTarget = this.isTargetingDocument()
+                ? document
+                : this.diagram_outer_svg;
             // this.registerEventListener(this.diagram_outer_svg, 'mousemove',  (evt:any) => {dragAndDropHandler.drag(evt);});
-            this.registerEventListener(eventTarget, 'mousemove', (evt) => { dragAndDropHandler.drag(evt); });
-            this.registerEventListener(eventTarget, 'mouseup', (evt) => { dragAndDropHandler.endDrag(evt); });
-            this.registerEventListener(eventTarget, 'touchmove', (evt) => { dragAndDropHandler.drag(evt); });
-            this.registerEventListener(eventTarget, 'touchend', (evt) => { dragAndDropHandler.endDrag(evt); });
-            this.registerEventListener(eventTarget, 'touchcancel', (evt) => { dragAndDropHandler.endDrag(evt); });
+            this.registerEventListener(eventTarget, "mousemove", (evt) => {
+                dragAndDropHandler.drag(evt);
+            });
+            this.registerEventListener(eventTarget, "mouseup", (evt) => {
+                dragAndDropHandler.endDrag(evt);
+            });
+            this.registerEventListener(eventTarget, "touchmove", (evt) => {
+                dragAndDropHandler.drag(evt);
+            });
+            this.registerEventListener(eventTarget, "touchend", (evt) => {
+                dragAndDropHandler.endDrag(evt);
+            });
+            this.registerEventListener(eventTarget, "touchcancel", (evt) => {
+                dragAndDropHandler.endDrag(evt);
+            });
         }
     }
     /**
@@ -25112,7 +25153,7 @@ class Interactive {
      * you can also add custom region box for the target by adding `custom_region_box: [Vector2, Vector2]` in the config
      *
      * you can also add a sorting function for the target by adding `sorting_function: (a: string, b: string) => number`
-    */
+     */
     dnd_container(name, diagram, capacity, config) {
         var _a;
         this.init_drag_and_drop();
@@ -25152,7 +25193,7 @@ class Interactive {
      * @param container_diagram diagram of the container, if not provided, a container will be created automatically
      * @param callback callback function (called after the draggable is moved)
      * @param onclickstart_callback callback function (called at the start of the drag)
-    */
+     */
     dnd_draggable(name, diagram, container_diagram, callback, onclickstart_callback) {
         this.init_drag_and_drop();
         if (this.dragAndDropHandler == undefined)
@@ -25183,7 +25224,7 @@ class Interactive {
      * Register a validation function when a draggable is moved to a container
      * If the function return false, the draggable will not be moved
      * @param fun validation function
-    */
+     */
     dnd_register_move_validation_function(fun) {
         var _a;
         this.init_drag_and_drop();
@@ -25201,7 +25242,7 @@ class Interactive {
     /**
      * Get the data of the drag and drop objects with the format:
      * `{container:string, content:string[]}[]`
-    */
+     */
     get_dnd_data() {
         var _a, _b;
         return (_b = (_a = this.dragAndDropHandler) === null || _a === void 0 ? void 0 : _a.getData()) !== null && _b !== void 0 ? _b : [];
@@ -25215,16 +25256,16 @@ class Interactive {
         (_a = this.dragAndDropHandler) === null || _a === void 0 ? void 0 : _a.setData(data);
     }
     /**
-    * reorder the tabindex of the containers
-    * @param container_names
-    */
+     * reorder the tabindex of the containers
+     * @param container_names
+     */
     dnd_reorder_tabindex(container_names) {
         var _a;
         (_a = this.dragAndDropHandler) === null || _a === void 0 ? void 0 : _a.reorder_svg_container_tabindex(container_names);
     }
     /**
-    * Get the content size of a container
-    */
+     * Get the content size of a container
+     */
     get_dnd_container_content_size(container_name) {
         if (!this.dragAndDropHandler)
             return [NaN, NaN];
@@ -25321,7 +25362,7 @@ class Interactive {
      * @param diagram_off diagram of the button when it is off
      * @param state initial state of the button
      * @param callback callback function when the button state is changed
-    */
+     */
     button_toggle(name, diagram_on, diagram_off, state = false, callback) {
         this.init_button();
         if (this.buttonHandler == undefined)
@@ -25352,12 +25393,15 @@ class Interactive {
      * @param diagram diagram of the button
      * @param diagram_pressed diagram of the button when it is pressed
      * @param callback callback function when the button is clicked
-    */
+     */
     button_click(name, diagram, diagram_pressed, callback) {
         this.init_button();
         if (this.buttonHandler == undefined)
             throw Error("buttonHandler in Interactive class is undefined");
-        let n_callback = () => { callback(); this.draw(); };
+        let n_callback = () => {
+            callback();
+            this.draw();
+        };
         this.buttonHandler.try_add_click(name, diagram, diagram_pressed, diagram, n_callback);
     }
     /**
@@ -25367,12 +25411,15 @@ class Interactive {
      * @param diagram_pressed diagram of the button when it is pressed
      * @param diagram_hover diagram of the button when it is hovered
      * @param callback callback function when the button is clicked
-    */
+     */
     button_click_hover(name, diagram, diagram_pressed, diagram_hover, callback) {
         this.init_button();
         if (this.buttonHandler == undefined)
             throw Error("buttonHandler in Interactive class is undefined");
-        let n_callback = () => { callback(); this.draw(); };
+        let n_callback = () => {
+            callback();
+            this.draw();
+        };
         this.buttonHandler.try_add_click(name, diagram, diagram_pressed, diagram_hover, n_callback);
     }
 }
@@ -25432,9 +25479,11 @@ function firefox_calcCTM(svgelem) {
     let scale = Math.min(scalex, scaley);
     // let translateX = (screenWidth/2  + ctm.e) - (viewBox.width/2  + viewBox.x) * scale;
     // let translateY = (screenHeight/2 + ctm.f) - (viewBox.height/2 + viewBox.y) * scale;
-    let translateX = (screenWidth / 2) - (viewBox.width / 2 + viewBox.x) * scale;
-    let translateY = (screenHeight / 2) - (viewBox.height / 2 + viewBox.y) * scale;
-    return DOMMatrix.fromMatrix(ctm).translate(translateX, translateY).scale(scale);
+    let translateX = screenWidth / 2 - (viewBox.width / 2 + viewBox.x) * scale;
+    let translateY = screenHeight / 2 - (viewBox.height / 2 + viewBox.y) * scale;
+    return DOMMatrix.fromMatrix(ctm)
+        .translate(translateX, translateY)
+        .scale(scale);
 }
 /**
  * Convert client position to SVG position
@@ -25446,7 +25495,7 @@ function clientPos_to_svgPos(clientPos, svgelem) {
     // NOTE: there's a well known bug in firefox about `getScreenCTM()`
     // check if the browser is firefox
     let CTM;
-    if (navigator.userAgent.toLowerCase().indexOf('firefox') > -1) {
+    if (navigator.userAgent.toLowerCase().indexOf("firefox") > -1) {
         CTM = firefox_calcCTM(svgelem);
     }
     else {
@@ -25455,7 +25504,7 @@ function clientPos_to_svgPos(clientPos, svgelem) {
     // console.log(CTM);
     return {
         x: (clientPos.x - CTM.e) / CTM.a,
-        y: -(clientPos.y - CTM.f) / CTM.d
+        y: -(clientPos.y - CTM.f) / CTM.d,
     };
 }
 function getMousePosition(evt, svgelem) {
@@ -25465,7 +25514,7 @@ function getMousePosition(evt, svgelem) {
     }
     let clientPos = {
         x: evt.clientX,
-        y: evt.clientY
+        y: evt.clientY,
     };
     return clientPos_to_svgPos(clientPos, svgelem);
 }
@@ -25665,11 +25714,12 @@ class DragAndDropHandler {
             return;
         }
         this.containers[name] = {
-            name, diagram,
+            name,
+            diagram,
             position: diagram.origin,
             content: [],
             config: config !== null && config !== void 0 ? config : { type: "horizontal-uniform" },
-            capacity: capacity !== null && capacity !== void 0 ? capacity : 1
+            capacity: capacity !== null && capacity !== void 0 ? capacity : 1,
         };
     }
     generate_position_map(bbox, config, capacity, content) {
@@ -25681,7 +25731,7 @@ class DragAndDropHandler {
                 let dx = width / capacity;
                 let x0 = bbox[0].x + dx / 2;
                 let y = p_center.y;
-                return range(0, capacity).map(i => V2(x0 + dx * i, y));
+                return range(0, capacity).map((i) => V2(x0 + dx * i, y));
             }
             case "vertical-uniform": {
                 //NOTE: top to bottom
@@ -25689,7 +25739,7 @@ class DragAndDropHandler {
                 let dy = height / capacity;
                 let x = p_center.x;
                 let y0 = bbox[1].y - dy / 2;
-                return range(0, capacity).map(i => V2(x, y0 - dy * i));
+                return range(0, capacity).map((i) => V2(x, y0 - dy * i));
             }
             case "grid": {
                 let [nx, ny] = config.value;
@@ -25699,7 +25749,7 @@ class DragAndDropHandler {
                 let dy = height / ny;
                 let x0 = bbox[0].x + dx / 2;
                 let y0 = bbox[1].y - dy / 2;
-                return range(0, capacity).map(i => {
+                return range(0, capacity).map((i) => {
                     let x = x0 + dx * (i % nx);
                     let y = y0 - dy * Math.floor(i / nx);
                     return V2(x, y);
@@ -25709,19 +25759,23 @@ class DragAndDropHandler {
                 const p_top_center = V2(p_center.x, bbox[1].y);
                 const sizelist = content.map((name) => { var _a, _b; return (_b = (_a = this.draggables[name]) === null || _a === void 0 ? void 0 : _a.diagram_size) !== null && _b !== void 0 ? _b : [0, 0]; });
                 const size_rects = sizelist.map(([w, h]) => rectangle(w, h).mut());
-                const distributed = distribute_vertical_and_align(size_rects, config.padding).mut()
-                    .move_origin('top-center').position(p_top_center)
+                const distributed = distribute_vertical_and_align(size_rects, config.padding)
+                    .mut()
+                    .move_origin("top-center")
+                    .position(p_top_center)
                     .translate(V2(0, -config.padding));
-                return distributed.children.map(d => d.origin);
+                return distributed.children.map((d) => d.origin);
             }
             case "horizontal": {
                 const p_center_left = V2(bbox[0].x, p_center.y);
                 const sizelist = content.map((name) => { var _a, _b; return (_b = (_a = this.draggables[name]) === null || _a === void 0 ? void 0 : _a.diagram_size) !== null && _b !== void 0 ? _b : [0, 0]; });
                 const size_rects = sizelist.map(([w, h]) => rectangle(w, h).mut());
-                const distributed = distribute_horizontal_and_align(size_rects, config.padding).mut()
-                    .move_origin('center-left').position(p_center_left)
+                const distributed = distribute_horizontal_and_align(size_rects, config.padding)
+                    .mut()
+                    .move_origin("center-left")
+                    .position(p_center_left)
                     .translate(V2(config.padding, 0));
-                return distributed.children.map(d => d.origin);
+                return distributed.children.map((d) => d.origin);
             }
             case "flex-row": {
                 const pad = (_a = config.padding) !== null && _a !== void 0 ? _a : 0;
@@ -25730,25 +25784,28 @@ class DragAndDropHandler {
                 const size_rects = sizelist.map(([w, h]) => rectangle(w, h).mut());
                 let distributed = distribute_variable_row(size_rects, container_width, pad, pad, config.vertical_alignment, config.horizontal_alignment).mut();
                 switch (config.horizontal_alignment) {
-                    case 'center':
+                    case "center":
                         {
                             distributed = distributed
-                                .move_origin('top-center').position(V2(p_center.x, bbox[1].y - pad));
+                                .move_origin("top-center")
+                                .position(V2(p_center.x, bbox[1].y - pad));
                         }
                         break;
-                    case 'right':
+                    case "right":
                         {
                             distributed = distributed
-                                .move_origin('top-right').position(V2(bbox[1].x - pad, bbox[1].y - pad));
+                                .move_origin("top-right")
+                                .position(V2(bbox[1].x - pad, bbox[1].y - pad));
                         }
                         break;
-                    case 'center':
+                    case "center":
                     default: {
                         distributed = distributed
-                            .move_origin('top-left').position(V2(bbox[0].x + pad, bbox[1].y - pad));
+                            .move_origin("top-left")
+                            .position(V2(bbox[0].x + pad, bbox[1].y - pad));
                     }
                 }
-                return distributed.children.map(d => d.origin);
+                return distributed.children.map((d) => d.origin);
             }
             default: {
                 return [];
@@ -25761,7 +25818,7 @@ class DragAndDropHandler {
         if (container == undefined)
             return [NaN, NaN];
         const pad = (_a = container.config.padding) !== null && _a !== void 0 ? _a : 0;
-        const content_diagrams = container.content.map(name => { var _a, _b; return (_b = (_a = this.draggables[name]) === null || _a === void 0 ? void 0 : _a.diagram) !== null && _b !== void 0 ? _b : empty(); });
+        const content_diagrams = container.content.map((name) => { var _a, _b; return (_b = (_a = this.draggables[name]) === null || _a === void 0 ? void 0 : _a.diagram) !== null && _b !== void 0 ? _b : empty(); });
         const [width, height] = size(diagram_combine(...content_diagrams));
         return [width + 2 * pad, height + 2 * pad];
     }
@@ -25803,7 +25860,13 @@ class DragAndDropHandler {
             return;
         }
         const diagram_size = size(diagram);
-        this.draggables[name] = { name, diagram: diagram.mut(), diagram_size, position: diagram.origin, container: container_name };
+        this.draggables[name] = {
+            name,
+            diagram: diagram.mut(),
+            diagram_size,
+            position: diagram.origin,
+            container: container_name,
+        };
         this.containers[container_name].content.push(name);
     }
     add_draggable_with_container(name, diagram, container_diagram) {
@@ -25818,13 +25881,19 @@ class DragAndDropHandler {
         this.add_container(initial_container_name, container_diagram);
         const diagram_size = size(diagram);
         this.containers[initial_container_name].content.push(name);
-        this.draggables[name] = { name, diagram: diagram.mut(), diagram_size, position: diagram.origin, container: initial_container_name };
+        this.draggables[name] = {
+            name,
+            diagram: diagram.mut(),
+            diagram_size,
+            position: diagram.origin,
+            container: initial_container_name,
+        };
     }
     remove_draggable(name) {
         var _a;
         for (let container_name in this.containers) {
             const container = this.containers[container_name];
-            container.content = container.content.filter(e => e != name);
+            container.content = container.content.filter((e) => e != name);
         }
         (_a = this.draggables[name].svgelement) === null || _a === void 0 ? void 0 : _a.remove();
         delete this.draggables[name];
@@ -26076,8 +26145,7 @@ class DragAndDropHandler {
         }
     }
     remove_draggable_from_container(draggable_name, container_name) {
-        this.containers[container_name].content =
-            this.containers[container_name].content.filter((name) => name != draggable_name);
+        this.containers[container_name].content = this.containers[container_name].content.filter((name) => name != draggable_name);
     }
     move_draggable_to_container(draggable_name, container_name, ignore_callback = false) {
         let draggable = this.draggables[draggable_name];
@@ -26223,8 +26291,9 @@ class DragAndDropHandler {
             this.try_move_draggable_to_container(this.draggedElementName, this.hoveredContainerName);
         }
         // if dropped outside of any container
-        if (this.hoveredContainerName == null && this.draggedElementName != null
-            && this.dropped_outside_callback != null) {
+        if (this.hoveredContainerName == null &&
+            this.draggedElementName != null &&
+            this.dropped_outside_callback != null) {
             this.dropped_outside_callback(this.draggedElementName);
         }
         this.draggedElementName = null;
@@ -26316,7 +26385,9 @@ class ButtonHandler {
             if (e.key == "Enter")
                 update_state(!this.states[name]);
         };
-        const setter = (state) => { update_state(state, false); };
+        const setter = (state) => {
+            update_state(state, false);
+        };
         return setter;
     }
     /** add a new click button if it doesn't exist, otherwise, update diagrams and callback */
@@ -26707,619 +26778,6 @@ let Image$1 = class Image {
     getElement() {
         return this.element;
     }
-};
-
-class ReactiveElement {
-    constructor() {
-        this.subscribers = new Map();
-    }
-    createState(initialState) {
-        return new Proxy(initialState, {
-            set: (target, property, value) => {
-                var _a;
-                const oldValue = target[property];
-                target[property] = value;
-                if (oldValue !== value && this.subscribers.has(property)) {
-                    (_a = this.subscribers.get(property)) === null || _a === void 0 ? void 0 : _a.forEach(callback => callback(value));
-                }
-                return true;
-            }
-        });
-    }
-    setState(state) {
-        Object.keys(state).forEach(key => {
-            this.state[key] = state[key];
-        });
-        console.warn(Object.entries(this.state), "--state");
-    }
-    subscribe(property, callback) {
-        var _a;
-        if (!this.subscribers.has(property)) {
-            this.subscribers.set(property, new Set());
-        }
-        (_a = this.subscribers.get(property)) === null || _a === void 0 ? void 0 : _a.add(callback);
-    }
-    unsubscribe(property, callback) {
-        var _a;
-        (_a = this.subscribers.get(property)) === null || _a === void 0 ? void 0 : _a.delete(callback);
-    }
-    emit(eventName, data) {
-        var _a;
-        if (this.subscribers.has(eventName)) {
-            (_a = this.subscribers.get(eventName)) === null || _a === void 0 ? void 0 : _a.forEach(callback => callback(data));
-        }
-    }
-    on(eventName, callback) {
-        this.subscribe(eventName, callback);
-    }
-}
-class Quiz extends ReactiveElement {
-    constructor(status, optionType, questionElements, optionsElements, isMultipleSelection = false, explanationElements = [], correctOptions = []) {
-        super();
-        this.id = "";
-        this.type = "quiz";
-        this.quiz_footer = null;
-        this.element = document.createElement('div'),
-            this.state = this.createState({
-                questionElements: questionElements,
-                optionsElements: optionsElements,
-                isMultipleSelection: isMultipleSelection,
-                explanationElements: explanationElements,
-                correctOptions: correctOptions,
-                optionType: optionType,
-                showSubmit: status !== "completed",
-                status: status,
-                selectedOptions: new Set(),
-                showExplanation: false,
-                isAnswerRevealed: false,
-                showHint: false,
-                hint: "",
-                disabledOptions: new Set(),
-                isExplanationViewed: false,
-            });
-        this.initQuizz();
-        this.setupQuizClickHandler();
-    }
-    initQuizz() {
-        this.renderQuestions();
-        this.renderOptions();
-        this.renderHint();
-        this.renderExplanation();
-        this.renderSubmitButton();
-        this.renderExplanationButton();
-        this.renderResetButton();
-        // Set up reactive subscriptions
-        this.subscribe('showSubmit', (value) => this.onShowSubmitChange(value));
-        this.subscribe('showExplanation', (value) => this.onShowExplanationChange(value));
-        this.subscribe("selectedOptions", (value) => this.onSelectedOptionsChange(value));
-        this.subscribe("isAnswerRevealed", (value) => this.onIsAnswerReaveledChange(value));
-        this.subscribe("isExplanationViewed", (value) => this.onIsExplanationViewed(value));
-        this.subscribe("disabledOptions", (value) => this.onDisabledOptionsChange(value));
-        this.subscribe("status", (value) => this.onStatusChange(value));
-        this.subscribe("showHint", (value) => this.onShowHintChange(value));
-    }
-    renderQuestions() {
-        let questionElement = document.createElement("div");
-        questionElement.classList.add(Quiz.SELECTORS.QUESTION);
-        questionElement = Content.CombineELements(questionElement, ...this.state.questionElements);
-        this.element.appendChild(questionElement);
-    }
-    renderOptions() {
-        const existingOptionsElement = this.element.querySelector(`.${Quiz.SELECTORS.OPTIONS}`);
-        if (existingOptionsElement) {
-            this.element.removeChild(existingOptionsElement);
-        }
-        let optionsElement = document.createElement("div");
-        optionsElement.classList.add(Quiz.SELECTORS.OPTIONS);
-        optionsElement.setAttribute(`data-type`, this.state.optionType);
-        let isCompleted = this.state.status === "completed";
-        this.state.optionsElements.forEach((ele, index) => {
-            const optionContainer = document.createElement("div");
-            optionContainer.classList.add(`option_container`, `option_container_${index + 1}`);
-            const radio = document.createElement("input");
-            radio.type = this.state.isMultipleSelection ? "checkbox" : "radio";
-            radio.name = `quiz_${this.id}_option`;
-            radio.id = `quiz_${this.id}_option_${index + 1}`;
-            radio.classList.add("option_input");
-            radio.checked = isCompleted ? false : this.state.selectedOptions.has(index + 1);
-            radio.disabled = isCompleted;
-            // Create X mark element (initially hidden)
-            const xMark = document.createElement("span");
-            xMark.classList.add(Quiz.SELECTORS.X_MARK);
-            xMark.innerHTML = "✕"; // Unicode X symbol
-            xMark.style.display = "none";
-            const label = document.createElement("label");
-            label.htmlFor = radio.id;
-            label.classList.add("option_label");
-            const optionElement = ele.getElement();
-            optionElement.classList.add(`option`, `option_${index + 1}`);
-            if (isCompleted) {
-                if (this.state.correctOptions.includes(index + 1)) {
-                    optionContainer.classList.add("selected");
-                }
-                else {
-                    optionContainer.classList.add("disabled");
-                }
-            }
-            else {
-                const handleClick = () => this.onOptionClick(index + 1);
-                optionContainer.addEventListener("click", (e) => {
-                    if (e.target !== radio && !this.state.disabledOptions.has(index + 1)) {
-                        radio.checked = true;
-                        handleClick();
-                    }
-                });
-                radio.addEventListener('change', () => {
-                    if (!this.state.disabledOptions.has(index + 1)) {
-                        handleClick();
-                    }
-                });
-            }
-            label.appendChild(radio);
-            label.appendChild(xMark);
-            label.appendChild(optionElement);
-            optionContainer.appendChild(label);
-            ele.appendTo(optionContainer);
-            optionsElement.appendChild(optionContainer);
-        });
-        this.element.appendChild(optionsElement);
-    }
-    renderExplanationButton() {
-        const explanationButton = document.createElement("button");
-        explanationButton.textContent = "Show Explanation";
-        explanationButton.classList.add(Quiz.SELECTORS.EXPLANATION_BUTTON);
-        explanationButton.addEventListener("click", () => this.toggleExplanation());
-        const quiz_footer = this.getQuizzFooter();
-        quiz_footer.appendChild(explanationButton);
-    }
-    renderExplanation() {
-        const explanationContent = document.createElement("div");
-        explanationContent.classList.add(Quiz.SELECTORS.EXPLANATION_CONTENT);
-        explanationContent.style.display = this.state.isExplanationViewed ? "block" : "none";
-        this.state.explanationElements.forEach((element) => element.appendTo(explanationContent));
-        this.element.appendChild(explanationContent);
-    }
-    renderHint() {
-        const hintElement = document.createElement("div");
-        hintElement.classList.add(Quiz.SELECTORS.HINT);
-        hintElement.style.display = this.state.showHint ? "block" : "none";
-        this.element.appendChild(hintElement);
-    }
-    renderSubmitButton() {
-        const submitButton = document.createElement("button");
-        submitButton.textContent = "Check";
-        const quiz_footer = this.getQuizzFooter();
-        submitButton.style.display = this.state.showSubmit ? "block" : "none";
-        submitButton.classList.add(Quiz.SELECTORS.SUBMIT);
-        submitButton.addEventListener("click", () => {
-            const selectedArray = Array.from(this.state.selectedOptions);
-            const isCorrect = this.checkAnswer();
-            this.emit("submit", { isCorrect, selectedArray });
-        });
-        quiz_footer.appendChild(submitButton);
-    }
-    renderResetButton() {
-        const resetButton = document.createElement("button");
-        resetButton.textContent = "Reset";
-        resetButton.classList.add(Quiz.SELECTORS.RESET_BUTTON);
-        resetButton.addEventListener("click", () => {
-            this.setState({
-                showSubmit: true,
-                showExplanation: false,
-                isExplanationViewed: false,
-                selectedOptions: new Set(),
-                status: 'un-attempt',
-                disabledOptions: new Set(),
-                isAnswerRevealed: false,
-                showHint: false,
-                hint: ""
-            });
-            this.clearDisableOptions();
-        });
-        const quiz_footer = this.getQuizzFooter();
-        quiz_footer.appendChild(resetButton);
-    }
-    toggleExplanation() {
-        if (this.state.status !== "correct" && !this.state.isExplanationViewed) {
-            this.setState({
-                status: "viewed",
-                isExplanationViewed: true,
-                showSubmit: false,
-                showExplanation: !this.state.showExplanation
-            });
-        }
-        else {
-            this.setState({
-                showExplanation: !this.state.showExplanation
-            });
-        }
-        this.emit("explanationToggle", this.state.showExplanation);
-    }
-    clearDisableOptions() {
-        const optionsElement = this.element.querySelector(`.${Quiz.SELECTORS.OPTIONS}`);
-        if (optionsElement) {
-            this.state.optionsElements.forEach((_, index) => {
-                const optionContainer = optionsElement.querySelector(`.${Quiz.SELECTORS.OPTION_CONTAINER(index + 1)}`);
-                const radio = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector('input');
-                const xMark = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector(`.${Quiz.SELECTORS.X_MARK}`);
-                if (optionContainer && radio && xMark) {
-                    optionContainer.classList.remove("disabled");
-                    radio.style.display = "inline-block";
-                    radio.checked = false;
-                    xMark.style.display = "none";
-                    radio.disabled = true;
-                }
-            });
-        }
-    }
-    onIsExplanationViewed(isExplanationViewed) {
-        const optionsElement = this.element.querySelector(`.${Quiz.SELECTORS.OPTIONS}`);
-        if (optionsElement && isExplanationViewed) {
-            this.state.optionsElements.forEach((_, index) => {
-                const optionContainer = optionsElement.querySelector(`.${Quiz.SELECTORS.OPTION_CONTAINER(index + 1)}`);
-                const radio = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector('input');
-                const xMark = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector(`.${Quiz.SELECTORS.X_MARK}`);
-                if (optionContainer && radio && xMark) {
-                    if (this.state.correctOptions.includes(index + 1)) {
-                        optionContainer.classList.add("selected");
-                    }
-                    else {
-                        optionContainer.classList.remove("selected");
-                    }
-                    radio.style.display = "none";
-                    xMark.style.display = "none";
-                    radio.disabled = true;
-                }
-            });
-        }
-    }
-    onShowSubmitChange(showSubmit) {
-        const submitButton = this.element.querySelector(`.${Quiz.SELECTORS.SUBMIT}`);
-        if (submitButton) {
-            submitButton.style.display = showSubmit ? "display" : "none";
-        }
-    }
-    onShowExplanationChange(isExplanationViewed) {
-        const explanationButton = this.element.querySelector(`.${Quiz.SELECTORS.EXPLANATION_BUTTON}`);
-        const explanationContent = this.element.querySelector(`.${Quiz.SELECTORS.EXPLANATION_CONTENT}`);
-        if (isExplanationViewed) {
-            explanationButton.textContent = "Hide Explanation";
-            explanationContent.style.display = "block";
-        }
-        else {
-            explanationButton.textContent = "Show Explanation";
-            explanationContent.style.display = "none";
-        }
-    }
-    onSelectedOptionsChange(selectedOptions) {
-        const optionsElement = this.element.querySelector(`.${Quiz.SELECTORS.OPTIONS}`);
-        if (this.state.isExplanationViewed)
-            return;
-        if (this.state.status === "correct" || this.state.status === "completed")
-            return;
-        if (optionsElement) {
-            this.state.optionsElements.forEach((_, index) => {
-                const optionElement = optionsElement.querySelector(`.${Quiz.SELECTORS.OPTION(index + 1)}`);
-                const optionContainer = optionsElement.querySelector(`.${Quiz.SELECTORS.OPTION_CONTAINER(index + 1)}`);
-                if (optionContainer && optionElement) {
-                    if (selectedOptions.has(index + 1)) {
-                        optionElement.classList.add("selected");
-                        optionContainer.classList.add("selected");
-                    }
-                    else {
-                        optionElement.classList.remove("selected");
-                        optionContainer.classList.remove("selected");
-                    }
-                }
-            });
-        }
-    }
-    onIsAnswerReaveledChange(isAnswerRevealed) {
-        const optionsElement = this.element.querySelector(`.${Quiz.SELECTORS.OPTIONS}`);
-        if (optionsElement) {
-            (this.state.optionsElements || []).map((_, index) => {
-                const optionElement = optionsElement.querySelector(`.${Quiz.SELECTORS.OPTION(index + 1)}`);
-                const optionContainer = optionsElement.querySelector(`.${Quiz.SELECTORS.OPTION_CONTAINER(index + 1)}`);
-                if (optionContainer && optionElement) {
-                    optionElement.classList.remove("selected");
-                    optionContainer.classList.remove("selected");
-                }
-            });
-        }
-    }
-    onDisabledOptionsChange(disabledOptions) {
-        const optionsElement = this.element.querySelector(`.${Quiz.SELECTORS.OPTIONS}`);
-        if (optionsElement) {
-            this.state.optionsElements.forEach((_, index) => {
-                const optionContainer = optionsElement.querySelector(`.${Quiz.SELECTORS.OPTION_CONTAINER(index + 1)}`);
-                const radio = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector('input');
-                const xMark = optionContainer === null || optionContainer === void 0 ? void 0 : optionContainer.querySelector(`.${Quiz.SELECTORS.X_MARK}`);
-                if (optionContainer && radio && xMark) {
-                    if (disabledOptions.has(index + 1)) {
-                        optionContainer.classList.add("disabled");
-                        radio.style.display = "none";
-                        xMark.style.display = "inline-block";
-                        radio.disabled = true;
-                    }
-                }
-            });
-        }
-    }
-    onStatusChange(status) {
-        const quiz = this.element.closest(`.${Quiz.SELECTORS.QUIZ}`);
-        if (quiz) {
-            quiz.setAttribute("data-status", this.state.status);
-        }
-        // Highlight correct answer if no more attempts
-        if (status === "wrong") {
-            this.state.correctOptions.forEach(correctIndex => {
-                const optionContainer = this.element.querySelector(`.${Quiz.SELECTORS.OPTION_CONTAINER(correctIndex)}`);
-                if (optionContainer) {
-                    optionContainer.classList.add("correct-answer");
-                    // Hide X mark for correct answer when revealed
-                    this.setState({ isAnswerRevealed: true });
-                    const xMark = optionContainer.querySelector(`.${Quiz.SELECTORS.X_MARK}`);
-                    if (xMark) {
-                        xMark.style.display = "none";
-                    }
-                }
-            });
-        }
-        // if quizz status is correct || wrong
-        if (status !== "un-attempt") {
-            const restButton = this.element.querySelector(`.${Quiz.SELECTORS.RESET_BUTTON}`);
-            if (restButton) {
-                restButton.style.display = "none";
-            }
-        }
-    }
-    onShowHintChange(showHint) {
-        const hintElement = this.element.querySelector(`.${Quiz.SELECTORS.HINT}`);
-        if (hintElement && showHint) {
-            hintElement.innerText = this.state.hint;
-            hintElement.style.display = "block";
-        }
-        else {
-            hintElement.innerHTML = "";
-            hintElement.style.display = "none";
-        }
-    }
-    setupQuizClickHandler() {
-        this.element.addEventListener('click', (event) => {
-            const target = event.target;
-            // Don't trigger if clicking on or within these elements
-            const isInteractiveElement = target.closest(`.${Quiz.SELECTORS.SUBMIT}`);
-            if (!isInteractiveElement) {
-                this.hideHint();
-            }
-        });
-    }
-    onOptionClick(clickedIndex) {
-        if (this.state.disabledOptions.has(clickedIndex)) {
-            return;
-        }
-        const newSelectedOptions = new Set(this.state.selectedOptions);
-        if (this.state.isMultipleSelection) {
-            if (newSelectedOptions.has(clickedIndex)) {
-                newSelectedOptions.delete(clickedIndex);
-            }
-            else {
-                newSelectedOptions.add(clickedIndex);
-            }
-        }
-        else {
-            newSelectedOptions.clear();
-            newSelectedOptions.add(clickedIndex);
-        }
-        this.setState({ selectedOptions: new Set(newSelectedOptions) });
-        this.emit("selection", Array.from(newSelectedOptions));
-    }
-    getQuizzFooter() {
-        if (!this.quiz_footer) {
-            this.quiz_footer = document.createElement("div");
-            this.quiz_footer.classList.add('quiz_footer');
-            this.element.appendChild(this.quiz_footer);
-        }
-        return this.quiz_footer;
-    }
-    showHint(hintText) {
-        // NOTE: HERE ORDER IS IMPORTANT HINT, SHOWHINT
-        // BECAUSE setState updainting in squece
-        // Feature: batch updated functionality need to implement
-        this.setState({ hint: hintText, showHint: true });
-    }
-    hideHint() {
-        this.setState({ showHint: false, hint: "", });
-    }
-    checkAnswer() {
-        const selectedArray = Array.from(this.state.selectedOptions).sort();
-        const correctArray = [...this.state.correctOptions].sort();
-        const isCorrect = this.arraysEqual(selectedArray, correctArray);
-        if (!isCorrect) {
-            // Disable wrong options
-            selectedArray.forEach(option => {
-                const newDisabledOptions = new Set(this.state.disabledOptions);
-                newDisabledOptions.add(option);
-                this.setState({
-                    disabledOptions: newDisabledOptions,
-                });
-            });
-            const remainingValidOptions = this.state.optionsElements.length - this.state.disabledOptions.size;
-            // If only one valid option remains, it must be correct, so show it
-            if (remainingValidOptions <= 1) {
-                this.setState({
-                    showSubmit: false,
-                    status: "wrong",
-                });
-            }
-        }
-        else {
-            this.setState({ showSubmit: false, status: 'correct' });
-        }
-        return isCorrect;
-    }
-    arraysEqual(arr1, arr2) {
-        return arr1.length === arr2.length &&
-            arr1.every((value, index) => value === arr2[index]);
-    }
-    getElement() {
-        return this.element;
-    }
-    appendTo(container) {
-        const quiz = document.createElement("div");
-        quiz.classList.add("quiz");
-        quiz.setAttribute("data-status", this.state.status);
-        quiz.setAttribute('data-type', this.state.isMultipleSelection ? "multiple" : "single");
-        this.element.classList.add("quiz_container");
-        quiz.appendChild(this.element);
-        this.element.id = this.id;
-        container.appendChild(quiz);
-    }
-    getSubElements() {
-        return [
-            ...this.state.questionElements,
-            ...this.state.optionsElements,
-            ...this.state.explanationElements,
-        ];
-    }
-}
-Quiz.SELECTORS = {
-    QUIZ: "quiz",
-    QUESTION: "quiz_question",
-    SUBMIT: "quiz_submit",
-    OPTIONS: "quiz_options",
-    OPTION: (index) => `option_${index}`,
-    OPTION_CONTAINER: (index) => `option_container_${index}`,
-    X_MARK: "x-mark",
-    EXPLANATION_BUTTON: "quiz_explanation_button",
-    EXPLANATION_CONTENT: "quiz_explanation_content",
-    RESET_BUTTON: "quiz_reset",
-    HINT: "quiz_hint"
-};
-class InputQuiz extends ReactiveElement {
-    constructor(inputType, questionElements, explanationElements = []) {
-        super();
-        this.inputType = inputType;
-        this.id = "";
-        this.type = "input_quiz";
-        this.element = document.createElement("div");
-        this.state = this.createState({
-            questionElements,
-            inputValue: "",
-            explanationElements,
-            isExplanationVisible: false,
-            showHint: false,
-            hint: ""
-        });
-        this.inputElement = document.createElement("input");
-        this.inputElement.type = inputType;
-        this.initQuiz();
-        this.setupQuizClickHandler();
-    }
-    setupQuizClickHandler() {
-        this.element.addEventListener('click', (event) => {
-            const target = event.target;
-            // Don't trigger if clicking on or within these elements
-            target.closest(InputQuiz.SELECTORS.SUBMIT_BUTTON);
-        });
-    }
-    initQuiz() {
-        this.renderQuestion(this.state.questionElements);
-        this.renderInputField();
-        this.renderHint();
-        this.renderExplanation();
-        this.renderSubmitButton();
-        // Set up reactive subscriptions
-        this.subscribe('inputValue', (value) => this.onInputValueChange(value));
-        this.subscribe('isExplanationVisible', (value) => this.onExplanationVisibilityChange(value));
-        this.subscribe("showHint", (value) => this.onShowHintChange(value));
-        this.subscribe("hint", (value) => this.onHintChange(value));
-    }
-    renderQuestion(elements) {
-        let questionElement = document.createElement("div");
-        questionElement.classList.add(InputQuiz.SELECTORS.QUESTION);
-        questionElement = Content.CombineELements(questionElement, ...elements);
-        this.element.appendChild(questionElement);
-    }
-    renderInputField() {
-        this.inputElement.classList.add(InputQuiz.SELECTORS.QUESTION);
-        this.inputElement.addEventListener("input", (e) => {
-            this.state.inputValue = e.target.value;
-        });
-        this.element.appendChild(this.inputElement);
-    }
-    renderHint() {
-        const hintElement = document.createElement("div");
-        hintElement.classList.add(InputQuiz.SELECTORS.HINT);
-        hintElement.style.display = this.state.showHint ? "block" : "none";
-        this.element.appendChild(hintElement);
-    }
-    renderExplanation() {
-        const explanationButton = document.createElement("button");
-        const explanationContent = document.createElement("div");
-        explanationButton.textContent = "Show Explanation";
-        explanationButton.classList.add(InputQuiz.SELECTORS.EXPLANATION_BUTTON);
-        explanationButton.addEventListener("click", () => {
-            this.state.isExplanationVisible = !this.state.isExplanationVisible;
-        });
-        explanationContent.classList.add(InputQuiz.SELECTORS.EXPLANATION_CONTENT);
-        explanationContent.style.display = "none";
-        this.state.explanationElements.forEach((element) => element.appendTo(explanationContent));
-        this.element.appendChild(explanationButton);
-        this.element.appendChild(explanationContent);
-    }
-    renderSubmitButton() {
-        const submitButton = document.createElement("button");
-        submitButton.textContent = "Submit";
-        submitButton.classList.add(InputQuiz.SELECTORS.SUBMIT_BUTTON);
-        submitButton.addEventListener("click", () => this.emit("submit", this.state.inputValue));
-        this.element.appendChild(submitButton);
-    }
-    onExplanationVisibilityChange(isVisible) {
-        const explanationButton = this.element.querySelector(`.${InputQuiz.SELECTORS.EXPLANATION_BUTTON}`);
-        const explanationContent = this.element.querySelector(`.${InputQuiz.SELECTORS.EXPLANATION_CONTENT}`);
-        explanationButton.textContent = isVisible ? "Hide Explanation" : "Show Explanation";
-        explanationContent.style.display = isVisible ? "block" : "none";
-    }
-    onShowHintChange(showHint) {
-        const hintElement = this.element.querySelector(`.${InputQuiz.SELECTORS.HINT}`);
-        if (hintElement && showHint) {
-            hintElement.innerText = this.state.hint;
-            hintElement.style.display = showHint ? "block" : "none";
-        }
-    }
-    onHintChange(value) {
-        const hintElement = this.element.querySelector(`.${InputQuiz.SELECTORS.HINT}`);
-        if (hintElement) {
-            hintElement.innerText = value;
-        }
-    }
-    showHint(text) {
-        this.setState({ showHint: true, hint: text });
-    }
-    onInputValueChange(value) {
-        this.emit("onchange", value);
-    }
-    getElement() {
-        return this.element;
-    }
-    appendTo(container) {
-        this.element.id = this.id;
-        this.element.classList.add(InputQuiz.SELECTORS.ELEMENT);
-        container.appendChild(this.element);
-    }
-    getSubElements() {
-        return [...this.state.questionElements, ...this.state.explanationElements];
-    }
-}
-InputQuiz.SELECTORS = {
-    ELEMENT: "input_quiz",
-    QUESTION: "input_quiz_question",
-    INPUT: "input_quiz_input",
-    HINT: "input_quiz_hint",
-    EXPLANATION_BUTTON: "input_quiz_explanation_button",
-    EXPLANATION_CONTENT: "input_quiz_explanation_content",
-    SUBMIT_BUTTON: "input_quiz_submit"
 };
 
 /**
@@ -30510,5 +29968,5 @@ var encoding = /*#__PURE__*/Object.freeze({
     encode: encode
 });
 
-export { Banner, Content, Diagram, Drawing, Header, Image$1 as Image, InputQuiz, Interactive, Markup, Paragraph, Path, Quiz, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text$2 as text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
+export { Banner, Content, Diagram, Drawing, Header, Image$1 as Image, Interactive, Markup, Paragraph, Path, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text$2 as text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
 //# sourceMappingURL=diagrams.js.map
