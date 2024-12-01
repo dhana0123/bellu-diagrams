@@ -1,6 +1,6 @@
 /**
  *  Class for 2D Vectors
-*/
+ */
 class Vector2 {
     constructor(x, y) {
         this.x = x;
@@ -50,6 +50,11 @@ class Vector2 {
     }
     apply(f) {
         return f(this.copy());
+    }
+    lerp(to, t) {
+        const x = this.x + t * (to.x - this.x);
+        const y = this.y + t * (to.y - this.y);
+        return new Vector2(x, y);
     }
 }
 /**
@@ -346,27 +351,37 @@ function anchor_to_textdata(anchor) {
     // hanging vs text-before-edge
     // ideographic vs text-after-edge
     switch (anchor) {
-        case "top-left": return { "text-anchor": "start", "dy": "0.75em" };
-        case "top-center": return { "text-anchor": "middle", "dy": "0.75em" };
-        case "top-right": return { "text-anchor": "end", "dy": "0.75em" };
-        case "center-left": return { "text-anchor": "start", "dy": "0.25em" };
-        case "center-center": return { "text-anchor": "middle", "dy": "0.25em" };
-        case "center-right": return { "text-anchor": "end", "dy": "0.25em" };
-        case "bottom-left": return { "text-anchor": "start", "dy": "-0.25em" };
-        case "bottom-center": return { "text-anchor": "middle", "dy": "-0.25em" };
-        case "bottom-right": return { "text-anchor": "end", "dy": "-0.25em" };
-        default: throw new Error("Unknown anchor " + anchor);
+        case "top-left":
+            return { "text-anchor": "start", dy: "0.75em" };
+        case "top-center":
+            return { "text-anchor": "middle", dy: "0.75em" };
+        case "top-right":
+            return { "text-anchor": "end", dy: "0.75em" };
+        case "center-left":
+            return { "text-anchor": "start", dy: "0.25em" };
+        case "center-center":
+            return { "text-anchor": "middle", dy: "0.25em" };
+        case "center-right":
+            return { "text-anchor": "end", dy: "0.25em" };
+        case "bottom-left":
+            return { "text-anchor": "start", dy: "-0.25em" };
+        case "bottom-center":
+            return { "text-anchor": "middle", dy: "-0.25em" };
+        case "bottom-right":
+            return { "text-anchor": "end", dy: "-0.25em" };
+        default:
+            throw new Error("Unknown anchor " + anchor);
     }
 }
 /**
-* Diagram Class
-*
-* Diagram is a tree structure
-* Diagram can be a polygon, curve, text, image, or diagram
-* Polygon is a closed path
-* Curve is an open path
-* Diagram is a tree of Diagrams
-*/
+ * Diagram Class
+ *
+ * Diagram is a tree structure
+ * Diagram can be a polygon, curve, text, image, or diagram
+ * Polygon is a closed path
+ * Curve is an open path
+ * Diagram is a tree of Diagrams
+ */
 class Diagram {
     constructor(type_, args = {}) {
         this.children = [];
@@ -444,7 +459,7 @@ class Diagram {
             Object.setPrototypeOf(objd.path, Path.prototype);
             objd.path = objd.path.copy();
         }
-        // bbox cache 
+        // bbox cache
         if (objd._bbox_cache != undefined && objd._bbox_cache.length == 2) {
             Object.setPrototypeOf(objd._bbox_cache[0], Vector2.prototype);
             Object.setPrototypeOf(objd._bbox_cache[1], Vector2.prototype);
@@ -482,7 +497,7 @@ class Diagram {
      */
     remove_tags(tags) {
         let newd = this.copy_if_not_mutable();
-        newd.tags = newd.tags.filter(t => !tags.includes(t));
+        newd.tags = newd.tags.filter((t) => !tags.includes(t));
         return newd;
     }
     /**
@@ -494,8 +509,8 @@ class Diagram {
         return newd;
     }
     /**
-    * Check if the diagram contains a tag
-    */
+     * Check if the diagram contains a tag
+     */
     contain_tag(tag) {
         return this.tags.includes(tag);
     }
@@ -556,12 +571,12 @@ class Diagram {
         return newd;
     }
     /**
-    * Apply a function to the diagram and all of its children recursively
-    * The function is only applied to the diagrams that contain a specific tag
-    * @param tags the tag to filter the diagrams
-    * @param func function to apply
-    * func takes in a diagram and returns a diagram
-    */
+     * Apply a function to the diagram and all of its children recursively
+     * The function is only applied to the diagrams that contain a specific tag
+     * @param tags the tag to filter the diagrams
+     * @param func function to apply
+     * func takes in a diagram and returns a diagram
+     */
     apply_to_tagged_recursive(tags, func) {
         if (!Array.isArray(tags))
             tags = [tags];
@@ -576,10 +591,10 @@ class Diagram {
         return newd;
     }
     /**
-    * Get all the diagrams that contain a specific tag
-    * @param tags the tag to filter the diagrams
-    * @return a list of diagrams
-    */
+     * Get all the diagrams that contain a specific tag
+     * @param tags the tag to filter the diagrams
+     * @return a list of diagrams
+     */
     get_tagged_elements(tags) {
         if (!Array.isArray(tags))
             tags = [tags];
@@ -658,9 +673,11 @@ class Diagram {
         if (excludedType === null || excludedType === void 0 ? void 0 : excludedType.includes(newd.type)) {
             return newd;
         }
-        else if (newd.type == DiagramType.Polygon || newd.type == DiagramType.Curve
-            || newd.type == DiagramType.Text || newd.type == DiagramType.Image
-            || newd.type == DiagramType.MultilineText) {
+        else if (newd.type == DiagramType.Polygon ||
+            newd.type == DiagramType.Curve ||
+            newd.type == DiagramType.Text ||
+            newd.type == DiagramType.Image ||
+            newd.type == DiagramType.MultilineText) {
             if (stylename === "fill") {
                 newd.style[stylename] = stylevalue;
             }
@@ -680,50 +697,62 @@ class Diagram {
     }
     /* * Clone style from another diagram */
     clone_style_from(diagram) {
-        return this.apply_recursive(d => {
+        return this.apply_recursive((d) => {
             d.style = Object.assign({}, diagram.style);
             return d;
         });
     }
     fill(color) {
-        return this.update_style('fill', color, [DiagramType.Text]);
+        return this.update_style("fill", color, [DiagramType.Text]);
     }
     stroke(color) {
-        return this.update_style('stroke', color, [DiagramType.Text]);
+        return this.update_style("stroke", color, [DiagramType.Text]);
     }
     opacity(opacity) {
-        return this.update_style('opacity', opacity.toString());
+        return this.update_style("opacity", opacity.toString());
     }
     strokewidth(width) {
-        return this.update_style('stroke-width', width.toString(), [DiagramType.Text]);
+        return this.update_style("stroke-width", width.toString(), [
+            DiagramType.Text,
+        ]);
     }
     strokelinecap(linecap) {
-        return this.update_style('stroke-linecap', linecap);
+        return this.update_style("stroke-linecap", linecap);
     }
     strokelinejoin(linejoin) {
-        return this.update_style('stroke-linejoin', linejoin);
+        return this.update_style("stroke-linejoin", linejoin);
     }
     strokedasharray(dasharray) {
-        return this.update_style('stroke-dasharray', dasharray.join(','));
+        return this.update_style("stroke-dasharray", dasharray.join(","));
     }
     vectoreffect(vectoreffect) {
-        return this.update_style('vector-effect', vectoreffect);
+        return this.update_style("vector-effect", vectoreffect);
     }
     filter(filter) {
-        return this.update_style('filter', `url(#${filter})`);
+        return this.update_style("filter", `url(#${filter})`);
     }
     textfill(color) {
-        return this.update_style('fill', color, [DiagramType.Polygon, DiagramType.Curve]);
+        return this.update_style("fill", color, [
+            DiagramType.Polygon,
+            DiagramType.Curve,
+        ]);
     }
     textstroke(color) {
-        return this.update_style('stroke', color, [DiagramType.Polygon, DiagramType.Curve]);
+        return this.update_style("stroke", color, [
+            DiagramType.Polygon,
+            DiagramType.Curve,
+        ]);
     }
     textstrokewidth(width) {
-        return this.update_style('stroke-width', width.toString(), [DiagramType.Polygon, DiagramType.Curve]);
+        return this.update_style("stroke-width", width.toString(), [
+            DiagramType.Polygon,
+            DiagramType.Curve,
+        ]);
     }
     update_textdata(textdataname, textdatavalue) {
         let newd = this.copy_if_not_mutable();
-        if (newd.type == DiagramType.Text || newd.type == DiagramType.MultilineText) {
+        if (newd.type == DiagramType.Text ||
+            newd.type == DiagramType.MultilineText) {
             newd.textdata[textdataname] = textdatavalue;
         }
         else if (newd.type == DiagramType.Diagram) {
@@ -731,35 +760,36 @@ class Diagram {
             for (let i = 0; i < newd.children.length; i++)
                 newd.children[i] = newd.children[i].update_textdata(textdataname, textdatavalue);
         }
-        else if (newd.type == DiagramType.Polygon || newd.type == DiagramType.Curve) ;
+        else if (newd.type == DiagramType.Polygon ||
+            newd.type == DiagramType.Curve) ;
         else {
             throw new Error("Unreachable, unknown diagram type : " + newd.type);
         }
         return newd;
     }
     fontfamily(fontfamily) {
-        return this.update_textdata('font-family', fontfamily);
+        return this.update_textdata("font-family", fontfamily);
     }
     fontstyle(fontstyle) {
-        return this.update_textdata('font-style', fontstyle);
+        return this.update_textdata("font-style", fontstyle);
     }
     fontsize(fontsize) {
-        return this.update_textdata('font-size', fontsize.toString());
+        return this.update_textdata("font-size", fontsize.toString());
     }
     fontweight(fontweight) {
-        return this.update_textdata('font-weight', fontweight.toString());
+        return this.update_textdata("font-weight", fontweight.toString());
     }
     fontscale(fontscale) {
-        return this.update_textdata('font-scale', fontscale.toString());
+        return this.update_textdata("font-scale", fontscale.toString());
     }
     textanchor(textanchor) {
-        return this.update_textdata('text-anchor', textanchor);
+        return this.update_textdata("text-anchor", textanchor);
     }
     textdy(dy) {
-        return this.update_textdata('dy', dy);
+        return this.update_textdata("dy", dy);
     }
     textangle(angle) {
-        return this.update_textdata('angle', angle.toString());
+        return this.update_textdata("angle", angle.toString());
     }
     text_tovar() {
         let newd = this.copy_if_not_mutable();
@@ -776,7 +806,7 @@ class Diagram {
     text_totext() {
         let newd = this.copy_if_not_mutable();
         if (newd.type == DiagramType.Text) {
-            newd = newd.remove_tags('textvar');
+            newd = newd.remove_tags("textvar");
         }
         else if (newd.type == DiagramType.Diagram) {
             // newd.children = newd.children.map(c => c.text_totext());
@@ -807,8 +837,9 @@ class Diagram {
             this._bbox_cache = bbox;
             return bbox;
         }
-        else if (this.type == DiagramType.Curve || this.type == DiagramType.Polygon
-            || this.type == DiagramType.Image) {
+        else if (this.type == DiagramType.Curve ||
+            this.type == DiagramType.Polygon ||
+            this.type == DiagramType.Image) {
             if (this.path == undefined) {
                 throw new Error(this.type + " must have a path");
             }
@@ -823,7 +854,8 @@ class Diagram {
             this._bbox_cache = bbox;
             return bbox;
         }
-        else if (this.type == DiagramType.Text || this.type == DiagramType.MultilineText) {
+        else if (this.type == DiagramType.Text ||
+            this.type == DiagramType.MultilineText) {
             const bbox = [this.origin.copy(), this.origin.copy()];
             this._bbox_cache = bbox;
             return bbox;
@@ -859,7 +891,7 @@ class Diagram {
         const prev_cached_bbox = this._bbox_cache;
         const newd = this.transform(Transform.translate(v));
         if (prev_cached_bbox != undefined) {
-            newd._bbox_cache = prev_cached_bbox.map(p => Transform.translate(v)(p));
+            newd._bbox_cache = prev_cached_bbox.map((p) => Transform.translate(v)(p));
         }
         return newd;
     }
@@ -891,7 +923,7 @@ class Diagram {
         if (origin == undefined) {
             origin = this.origin;
         }
-        if (typeof scale == 'number') {
+        if (typeof scale == "number") {
             scale = new Vector2(scale, scale);
         }
         return this.transform(Transform.scale(scale, origin));
@@ -901,20 +933,22 @@ class Diagram {
      * @param scale scaling factor
      */
     scaletext(scale) {
-        return this.apply_recursive(d => {
+        return this.apply_recursive((d) => {
             switch (d.type) {
                 case DiagramType.Text: {
-                    let fontsize = parseFloat(d.textdata['font-size'] || DEFAULT_FONTSIZE);
+                    let fontsize = parseFloat(d.textdata["font-size"] || DEFAULT_FONTSIZE);
                     let newd = d.copy_if_not_mutable();
-                    newd.textdata['font-size'] = (fontsize * scale).toString();
+                    newd.textdata["font-size"] = (fontsize * scale).toString();
                     return newd;
                 }
                 case DiagramType.MultilineText: {
                     let newd = d.copy_if_not_mutable();
-                    newd.multilinedata['scale-factor'] = (newd.multilinedata['scale-factor'] || 1) * scale;
+                    newd.multilinedata["scale-factor"] =
+                        (newd.multilinedata["scale-factor"] || 1) * scale;
                     return newd;
                 }
-                default: return d;
+                default:
+                    return d;
             }
         });
     }
@@ -1016,16 +1050,26 @@ class Diagram {
         let midx = (minx + maxx) / 2;
         let midy = (miny + maxy) / 2;
         switch (anchor) {
-            case "top-left": return new Vector2(minx, maxy);
-            case "top-center": return new Vector2(midx, maxy);
-            case "top-right": return new Vector2(maxx, maxy);
-            case "center-left": return new Vector2(minx, midy);
-            case "center-center": return new Vector2(midx, midy);
-            case "center-right": return new Vector2(maxx, midy);
-            case "bottom-left": return new Vector2(minx, miny);
-            case "bottom-center": return new Vector2(midx, miny);
-            case "bottom-right": return new Vector2(maxx, miny);
-            default: throw new Error("Unknown anchor " + anchor);
+            case "top-left":
+                return new Vector2(minx, maxy);
+            case "top-center":
+                return new Vector2(midx, maxy);
+            case "top-right":
+                return new Vector2(maxx, maxy);
+            case "center-left":
+                return new Vector2(minx, midy);
+            case "center-center":
+                return new Vector2(midx, midy);
+            case "center-right":
+                return new Vector2(maxx, midy);
+            case "bottom-left":
+                return new Vector2(minx, miny);
+            case "bottom-center":
+                return new Vector2(midx, miny);
+            case "bottom-right":
+                return new Vector2(maxx, miny);
+            default:
+                throw new Error("Unknown anchor " + anchor);
         }
     }
     /**
@@ -1059,8 +1103,8 @@ class Diagram {
         // for text, use text-anchor and dominant-baseline
         let newd = this.copy_if_not_mutable();
         let textdata = anchor_to_textdata(anchor);
-        newd.textdata['text-anchor'] = textdata['text-anchor'];
-        newd.textdata['dy'] = textdata['dy'];
+        newd.textdata["text-anchor"] = textdata["text-anchor"];
+        newd.textdata["dy"] = textdata["dy"];
         return newd;
     }
     /**
@@ -1074,7 +1118,8 @@ class Diagram {
      */
     move_origin_text(anchor) {
         let newd = this.copy_if_not_mutable();
-        if (this.type == DiagramType.Text || this.type == DiagramType.MultilineText) {
+        if (this.type == DiagramType.Text ||
+            this.type == DiagramType.MultilineText) {
             newd = newd.__move_origin_text(anchor);
         }
         else if (this.type == DiagramType.Diagram) {
@@ -1093,7 +1138,8 @@ class Diagram {
             }
             return length;
         }
-        else if (this.type == DiagramType.Curve || this.type == DiagramType.Polygon) {
+        else if (this.type == DiagramType.Curve ||
+            this.type == DiagramType.Polygon) {
             if (this.path == undefined) {
                 throw new Error(this.type + " must have a path");
             }
@@ -1104,8 +1150,8 @@ class Diagram {
         }
     }
     /**
-    * Reverse the order of the points in the path
-    */
+     * Reverse the order of the points in the path
+     */
     reverse_path() {
         var _a;
         let newd = this.copy_if_not_mutable();
@@ -1134,12 +1180,12 @@ class Diagram {
                 cumuative_length.push(length);
             }
             let total_length = length;
-            let cumulative_t = cumuative_length.map(l => l / total_length);
+            let cumulative_t = cumuative_length.map((l) => l / total_length);
             // figure out which children t is in
             for (let i = 0; i < cumulative_t.length; i++) {
                 if (t <= cumulative_t[i]) {
                     let child_id = i;
-                    let prev_t = (i == 0) ? 0 : cumulative_t[i - 1];
+                    let prev_t = i == 0 ? 0 : cumulative_t[i - 1];
                     let segment_t = (t - prev_t) / (cumulative_t[i] - prev_t);
                     return this.children[child_id].parametric_point(segment_t);
                 }
@@ -1167,24 +1213,26 @@ class Diagram {
     debug_bbox() {
         // TODO : let user supply the styling function
         let style_bbox = (d) => {
-            return d.fill('none').stroke('gray').strokedasharray([5, 5]);
+            return d.fill("none").stroke("gray").strokedasharray([5, 5]);
         };
         let [min, max] = this.bounding_box();
         let rect_bbox = polygon([
-            new Vector2(min.x, min.y), new Vector2(max.x, min.y),
-            new Vector2(max.x, max.y), new Vector2(min.x, max.y)
+            new Vector2(min.x, min.y),
+            new Vector2(max.x, min.y),
+            new Vector2(max.x, max.y),
+            new Vector2(min.x, max.y),
         ]).apply(style_bbox);
-        let origin_x = text$2('+').position(this.origin);
+        let origin_x = text$2("+").position(this.origin);
         return rect_bbox.combine(origin_x);
     }
     debug(show_index = true) {
         // TODO : let user supply the styling function
         let style_path = (d) => {
-            return d.fill('none').stroke('red').strokedasharray([5, 5]);
+            return d.fill("none").stroke("red").strokedasharray([5, 5]);
         };
         let style_index = (d) => {
-            let bg = d.textfill('white').textstroke('white').textstrokewidth(5);
-            let dd = d.fill('black');
+            let bg = d.textfill("white").textstroke("white").textstrokewidth(5);
+            let dd = d.fill("black");
             return bg.combine(dd);
         };
         // handle each type separately
@@ -1195,8 +1243,9 @@ class Diagram {
             // return empty at diagram origin
             return empty(this.origin);
         }
-        else if (this.type == DiagramType.Polygon || this.type == DiagramType.Curve
-            || this.type == DiagramType.Image) {
+        else if (this.type == DiagramType.Polygon ||
+            this.type == DiagramType.Curve ||
+            this.type == DiagramType.Image) {
             let f_obj = this.type == DiagramType.Polygon || DiagramType.Image ? polygon : curve;
             let deb_bbox = this.debug_bbox();
             if (this.path == undefined) {
@@ -1216,7 +1265,9 @@ class Diagram {
             let minimum_dist_tolerance = Math.min(max.x - min.x, max.y - min.y) / 10;
             for (let i = 0; i < points.length; i++) {
                 // push to point_texts only if far enough from prev_point
-                let dist_to_prev = prev_point == undefined ? Infinity : points[i].sub(prev_point).length();
+                let dist_to_prev = prev_point == undefined
+                    ? Infinity
+                    : points[i].sub(prev_point).length();
                 if (dist_to_prev < minimum_dist_tolerance)
                     continue;
                 point_texts.push(text$2(i.toString()).position(points[i]).apply(style_index));
@@ -1238,15 +1289,15 @@ class Path {
         this.mutable = false;
     }
     copy() {
-        let newpoints = this.points.map(p => new Vector2(p.x, p.y));
+        let newpoints = this.points.map((p) => new Vector2(p.x, p.y));
         return new Path(newpoints);
     }
     copy_if_not_mutable() {
         return this.mutable ? this : this.copy();
     }
     /**
-    * Reverse the order of the points in the path
-    */
+     * Reverse the order of the points in the path
+     */
     reverse() {
         let newp = this.copy_if_not_mutable();
         newp.points = newp.points.reverse();
@@ -1281,7 +1332,7 @@ class Path {
      * If `segment_index` (n) is defined, get the point at the nth segment.
      * If `segment_index` (n) is defined, t can be outside of [0, 1] and will return the extrapolated point.
      * @returns the position of the point
-    */
+     */
     parametric_point(t, closed = false, segment_index) {
         let extended_points = this.points;
         if (closed)
@@ -1299,12 +1350,12 @@ class Path {
                 cumulative_length.push(length);
             }
             let total_length = length;
-            let cumulative_t = cumulative_length.map(l => l / total_length);
+            let cumulative_t = cumulative_length.map((l) => l / total_length);
             // figure out which segment t is in
             for (let i = 0; i < cumulative_t.length; i++) {
                 if (t <= cumulative_t[i]) {
                     let segment_id = i;
-                    let prev_t = (i == 0) ? 0 : cumulative_t[i - 1];
+                    let prev_t = i == 0 ? 0 : cumulative_t[i - 1];
                     let segment_t = (t - prev_t) / (cumulative_t[i] - prev_t);
                     return this.parametric_point(segment_t, closed, segment_id);
                 }
@@ -1345,7 +1396,7 @@ function diagram_combine(...diagrams) {
     if (diagrams.length == 0) {
         return empty();
     }
-    let newdiagrams = diagrams.map(d => d.copy_if_not_mutable());
+    let newdiagrams = diagrams.map((d) => d.copy_if_not_mutable());
     // check if all children is mutable
     // if they are, then set the new diagram to be mutable
     let all_children_mutable = true;
@@ -1409,7 +1460,7 @@ function empty(v = V2(0, 0)) {
  */
 function text$2(str) {
     let dtext = new Diagram(DiagramType.Text, {
-        textdata: { text: str, "font-size": DEFAULT_FONTSIZE, },
+        textdata: { text: str, "font-size": DEFAULT_FONTSIZE },
         path: new Path([new Vector2(0, 0)]),
     });
     return dtext;
@@ -1425,8 +1476,10 @@ function image(src, width, height) {
     let imgdata = { src };
     // path: bottom-left, bottom-right, top-right, top-left
     let path = new Path([
-        V2(-width / 2, -height / 2), V2(width / 2, -height / 2),
-        V2(width / 2, height / 2), V2(-width / 2, height / 2),
+        V2(-width / 2, -height / 2),
+        V2(width / 2, -height / 2),
+        V2(width / 2, height / 2),
+        V2(-width / 2, height / 2),
     ]);
     let img = new Diagram(DiagramType.Image, { imgdata: imgdata, path: path });
     return img;
@@ -26780,6 +26833,82 @@ let Image$1 = class Image {
     }
 };
 
+// Easing functions
+function easeLinear(t) {
+    return t;
+}
+function easeIn(t) {
+    return t * t; // t^2
+}
+function easeOut(t) {
+    return t * (2 - t); // t * (2 - t)
+}
+function easeInOut(t) {
+    return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; // Smooth ease in and out
+}
+function easeOutElastic(t) {
+    return (Math.pow(2, -10 * t) * Math.sin(((t - 0.075) * (2 * Math.PI)) / 0.3) + 1);
+}
+function animateBetween(start, end, duration, // Duration in seconds
+onUpdate, easing = easeLinear) {
+    let startTime = null;
+    // The animation loop
+    const animate = (timestamp) => {
+        if (startTime === null)
+            startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const t = Math.min(elapsed / (duration * 1000), 1);
+        const easedT = easing(t);
+        // Interpolate between start and end position using eased progress
+        const currentPosition = start.lerp(end, easedT);
+        onUpdate(currentPosition);
+        // Continue the animation if not finished
+        if (t < 1) {
+            requestAnimationFrame(animate);
+        }
+    };
+    // Start the animation loop
+    requestAnimationFrame(animate);
+}
+function animateCustom(positions, // Array of Vector2 positions [start, intermediate1, ..., end]
+times, // Array of times in seconds corresponding to each position
+onUpdate, easing = easeLinear // Default easing is linear
+) {
+    if (positions.length !== times.length) {
+        throw new Error("positions and times arrays must have the same length.");
+    }
+    let startTime = null;
+    const animate = (timestamp) => {
+        if (startTime === null)
+            startTime = timestamp;
+        // Calculate elapsed time in seconds
+        const elapsed = (timestamp - startTime) / 1000;
+        // Find the segment of the animation to work on
+        let segmentIndex = times.findIndex((t, i) => elapsed < t && i > 0);
+        if (segmentIndex === -1)
+            segmentIndex = times.length - 1; // End of animation
+        const prevIndex = Math.max(segmentIndex - 1, 0);
+        const nextIndex = segmentIndex;
+        const segmentStartTime = times[prevIndex];
+        const segmentEndTime = times[nextIndex];
+        const segmentDuration = segmentEndTime - segmentStartTime;
+        // Normalize the time for the current segment
+        const t = Math.min(Math.max((elapsed - segmentStartTime) / segmentDuration, 0), 1);
+        // Apply easing function
+        const easedT = easing(t);
+        // Interpolate between the two positions
+        const currentPosition = positions[prevIndex].lerp(positions[nextIndex], easedT);
+        // Call the callback with the current position
+        onUpdate(currentPosition);
+        // Continue the animation if not finished
+        if (elapsed < times[times.length - 1]) {
+            requestAnimationFrame(animate);
+        }
+    };
+    // Start the animation loop
+    requestAnimationFrame(animate);
+}
+
 /**
  * convert a function that modifies a path of a diagram to a function that modifies a diagram
  * if the diagram is a polygon or curve, the function is applied directly to the diagram
@@ -29968,5 +30097,5 @@ var encoding = /*#__PURE__*/Object.freeze({
     encode: encode
 });
 
-export { Banner, Content, Diagram, Drawing, Header, Image$1 as Image, Interactive, Markup, Paragraph, Path, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text$2 as text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
+export { Banner, Content, Diagram, Drawing, Header, Image$1 as Image, Interactive, Markup, Paragraph, Path, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, animateBetween, animateCustom, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, easeIn, easeInOut, easeLinear, easeOut, easeOutElastic, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text$2 as text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
 //# sourceMappingURL=diagrams.js.map

@@ -1,6 +1,6 @@
 /**
  *  Class for 2D Vectors
-*/
+ */
 declare class Vector2 {
     x: number;
     y: number;
@@ -19,6 +19,7 @@ declare class Vector2 {
     normalize(): Vector2;
     copy(): Vector2;
     apply(f: (v: Vector2) => Vector2): Vector2;
+    lerp(to: Vector2, t: number): Vector2;
 }
 /**
  * Helper function to create a Vector2
@@ -39,24 +40,24 @@ declare enum DiagramType {
     Diagram = "diagram",
     MultilineText = "multilinetext"
 }
-type Anchor = 'top-left' | 'top-center' | 'top-right' | 'center-left' | 'center-center' | 'center-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
+type Anchor = "top-left" | "top-center" | "top-right" | "center-left" | "center-center" | "center-right" | "bottom-left" | "bottom-center" | "bottom-right";
 /**
  * Make sure that every function return a new Diagram
  * Diagram is immutable to the user
  */
 type DiagramStyle = {
-    "stroke": string;
-    "fill": string | LinearGradient;
-    "opacity": string;
+    stroke: string;
+    fill: string | LinearGradient;
+    opacity: string;
     "stroke-width": string;
     "stroke-linecap": string;
     "stroke-dasharray": string;
     "stroke-linejoin": string;
     "vector-effect": string;
-    "filter"?: string;
+    filter?: string;
 };
 type LinearGradient = {
-    type: 'linearGradient';
+    type: "linearGradient";
     x1?: string;
     y1?: string;
     x2?: string;
@@ -68,45 +69,45 @@ type LinearGradient = {
     }>;
 };
 type TextData = {
-    "text": string;
+    text: string;
     "font-family": string;
     "font-size": string;
     "font-weight": string;
     "font-style": string;
     "text-anchor": string;
-    "dy": string;
-    "angle": string;
+    dy: string;
+    angle: string;
     "font-scale": string;
 };
 type ImageData = {
-    "src": string;
+    src: string;
 };
 type ExtraTspanStyle = {
-    "dy": string;
-    "dx": string;
-    "textvar": boolean;
-    "tag": string;
+    dy: string;
+    dx: string;
+    textvar: boolean;
+    tag: string;
     "baseline-shift": string;
     "font-size-scale-factor": number;
     "is-prev-word": boolean;
 };
 type TextSpanData = {
-    "text": string;
-    "style": Partial<TextData> & Partial<DiagramStyle> & Partial<ExtraTspanStyle>;
+    text: string;
+    style: Partial<TextData> & Partial<DiagramStyle> & Partial<ExtraTspanStyle>;
 };
 type MultilineTextData = {
-    "content": TextSpanData[];
+    content: TextSpanData[];
     "scale-factor": number;
 };
 /**
-* Diagram Class
-*
-* Diagram is a tree structure
-* Diagram can be a polygon, curve, text, image, or diagram
-* Polygon is a closed path
-* Curve is an open path
-* Diagram is a tree of Diagrams
-*/
+ * Diagram Class
+ *
+ * Diagram is a tree structure
+ * Diagram can be a polygon, curve, text, image, or diagram
+ * Polygon is a closed path
+ * Curve is an open path
+ * Diagram is a tree of Diagrams
+ */
 declare class Diagram {
     type: DiagramType;
     children: Diagram[];
@@ -156,8 +157,8 @@ declare class Diagram {
      */
     reset_tags(): Diagram;
     /**
-    * Check if the diagram contains a tag
-    */
+     * Check if the diagram contains a tag
+     */
     contain_tag(tag: string): boolean;
     contain_all_tags(tags: string[]): boolean;
     /**
@@ -184,18 +185,18 @@ declare class Diagram {
      */
     apply_recursive(func: (d: Diagram) => Diagram): Diagram;
     /**
-    * Apply a function to the diagram and all of its children recursively
-    * The function is only applied to the diagrams that contain a specific tag
-    * @param tags the tag to filter the diagrams
-    * @param func function to apply
-    * func takes in a diagram and returns a diagram
-    */
+     * Apply a function to the diagram and all of its children recursively
+     * The function is only applied to the diagrams that contain a specific tag
+     * @param tags the tag to filter the diagrams
+     * @param func function to apply
+     * func takes in a diagram and returns a diagram
+     */
     apply_to_tagged_recursive(tags: string | string[], func: (d: Diagram) => Diagram): Diagram;
     /**
-    * Get all the diagrams that contain a specific tag
-    * @param tags the tag to filter the diagrams
-    * @return a list of diagrams
-    */
+     * Get all the diagrams that contain a specific tag
+     * @param tags the tag to filter the diagrams
+     * @return a list of diagrams
+     */
     get_tagged_elements(tags: string | string[]): Diagram[];
     /**
      * Combine another diagram with this diagram
@@ -227,10 +228,10 @@ declare class Diagram {
     stroke(color: string): Diagram;
     opacity(opacity: number): Diagram;
     strokewidth(width: number): Diagram;
-    strokelinecap(linecap: 'butt' | 'round' | 'square'): Diagram;
-    strokelinejoin(linejoin: 'arcs' | 'bevel' | 'miter' | 'miter-clip' | 'round'): Diagram;
+    strokelinecap(linecap: "butt" | "round" | "square"): Diagram;
+    strokelinejoin(linejoin: "arcs" | "bevel" | "miter" | "miter-clip" | "round"): Diagram;
     strokedasharray(dasharray: number[]): Diagram;
-    vectoreffect(vectoreffect: 'none' | 'non-scaling-stroke' | 'non-scaling-size' | 'non-rotation' | 'fixed-position'): Diagram;
+    vectoreffect(vectoreffect: "none" | "non-scaling-stroke" | "non-scaling-size" | "non-rotation" | "fixed-position"): Diagram;
     filter(filter: string): Diagram;
     textfill(color: string): Diagram;
     textstroke(color: string): Diagram;
@@ -239,9 +240,9 @@ declare class Diagram {
     fontfamily(fontfamily: string): Diagram;
     fontstyle(fontstyle: string): Diagram;
     fontsize(fontsize: number): Diagram;
-    fontweight(fontweight: 'normal' | 'bold' | 'bolder' | 'lighter' | number): Diagram;
-    fontscale(fontscale: number | 'auto'): Diagram;
-    textanchor(textanchor: 'start' | 'middle' | 'end'): Diagram;
+    fontweight(fontweight: "normal" | "bold" | "bolder" | "lighter" | number): Diagram;
+    fontscale(fontscale: number | "auto"): Diagram;
+    textanchor(textanchor: "start" | "middle" | "end"): Diagram;
     textdy(dy: string): Diagram;
     textangle(angle: number): Diagram;
     text_tovar(): Diagram;
@@ -369,8 +370,8 @@ declare class Diagram {
     move_origin_text(anchor: Anchor): Diagram;
     path_length(): number;
     /**
-    * Reverse the order of the points in the path
-    */
+     * Reverse the order of the points in the path
+     */
     reverse_path(): Diagram;
     /**
      * Get the point on the path at t
@@ -394,8 +395,8 @@ declare class Path {
     copy(): Path;
     copy_if_not_mutable(): Path;
     /**
-    * Reverse the order of the points in the path
-    */
+     * Reverse the order of the points in the path
+     */
     reverse(): Path;
     /**
      * Get the length of the path
@@ -416,7 +417,7 @@ declare class Path {
      * If `segment_index` (n) is defined, get the point at the nth segment.
      * If `segment_index` (n) is defined, t can be outside of [0, 1] and will return the extrapolated point.
      * @returns the position of the point
-    */
+     */
     parametric_point(t: number, closed?: boolean, segment_index?: number): Vector2;
     /**
      * Tranfrom the path by a function
@@ -936,6 +937,17 @@ declare class Image implements ContentElement {
     appendTo(container: HTMLDivElement): void;
     getElement(): Element;
 }
+
+declare function easeLinear(t: number): number;
+declare function easeIn(t: number): number;
+declare function easeOut(t: number): number;
+declare function easeInOut(t: number): number;
+declare function easeOutElastic(t: number): number;
+declare function animateBetween(start: Vector2, end: Vector2, duration: number, // Duration in seconds
+onUpdate: (position: Vector2) => void, easing?: (t: number) => number): void;
+declare function animateCustom(positions: Vector2[], // Array of Vector2 positions [start, intermediate1, ..., end]
+times: number[], // Array of times in seconds corresponding to each position
+onUpdate: (position: Vector2) => void, easing?: (t: number) => number): void;
 
 /**
  * Helper function to convert from degrees to radians
@@ -1927,4 +1939,4 @@ declare namespace encoding {
   export { encoding_decode as decode, encoding_encode as encode };
 }
 
-export { Banner, Content, Diagram, Drawing, Header, Image, Interactive, Markup, Paragraph, Path, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, type axes_options, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, type draw_to_svg_options, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };
+export { Banner, Content, Diagram, Drawing, Header, Image, Interactive, Markup, Paragraph, Path, TAG, V2, Vdir, Vector2, _init_default_diagram_style, _init_default_text_diagram_style, _init_default_textdata, align_horizontal, align_vertical, animateBetween, animateCustom, shapes_annotation as annotation, arc, array_repeat, arrow, arrow1, arrow2$1 as arrow2, ax, axes_corner_empty, axes_empty, type axes_options, axes_transform, shapes_bar as bar, boolean, shapes_boxplot as boxplot, circle, clientPos_to_svgPos, curve, shapes_curves as curves, default_diagram_style, default_text_diagram_style, default_textdata, diagram_combine, distribute_grid_row, distribute_horizontal, distribute_horizontal_and_align, distribute_variable_row, distribute_vertical, distribute_vertical_and_align, download_svg_as_png, download_svg_as_svg, draw_to_svg, draw_to_svg_element, type draw_to_svg_options, easeIn, easeInOut, easeLinear, easeOut, easeOutElastic, empty, encoding, filter, geo_construct, shapes_geometry as geometry, get_SVGPos_from_event, get_tagged_svg_element, shapes_graph as graph, handle_tex_in_svg, image, shapes_interactive as interactive, line$1 as line, linspace, linspace_exc, shapes_mechanics as mechanics, modifier as mod, multiline, multiline_bb, shapes_numberline as numberline, plot$1 as plot, plotf, plotv, polygon, range, range_inc, rectangle, rectangle_corner, regular_polygon, regular_polygon_side, reset_default_styles, square, str_latex_to_unicode, str_to_mathematical_italic, shapes_table as table, text, textvar, to_degree, to_radian, transpose, shapes_tree as tree, under_curvef, utils, xaxis, xgrid, xtickmark, xtickmark_empty, xticks, xyaxes, xycorneraxes, xygrid, yaxis, ygrid, ytickmark, ytickmark_empty, yticks };

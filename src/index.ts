@@ -22,6 +22,16 @@ export {
   Image,
 } from "./content.js";
 
+export {
+  animateBetween,
+  animateCustom,
+  easeLinear,
+  easeIn,
+  easeInOut,
+  easeOut,
+  easeOutElastic,
+} from "./animation.js";
+
 export { Vector2, V2, Vdir } from "./vector.js";
 
 export {
