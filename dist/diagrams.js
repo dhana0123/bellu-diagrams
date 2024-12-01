@@ -26850,7 +26850,7 @@ function easeOutElastic(t) {
     return (Math.pow(2, -10 * t) * Math.sin(((t - 0.075) * (2 * Math.PI)) / 0.3) + 1);
 }
 function animateBetween(start, end, duration, // Duration in seconds
-onUpdate, easing = easeLinear) {
+onUpdate, easing = easeLinear, loop = false) {
     let startTime = null;
     // The animation loop
     const animate = (timestamp) => {
@@ -26866,14 +26866,18 @@ onUpdate, easing = easeLinear) {
         if (t < 1) {
             requestAnimationFrame(animate);
         }
+        else if (loop) {
+            startTime = null;
+            requestAnimationFrame(animate);
+        }
     };
     // Start the animation loop
     requestAnimationFrame(animate);
 }
 function animateCustom(positions, // Array of Vector2 positions [start, intermediate1, ..., end]
 times, // Array of times in seconds corresponding to each position
-onUpdate, easing = easeLinear // Default easing is linear
-) {
+onUpdate, easing = easeLinear, // Default easing is linear
+loop = false) {
     if (positions.length !== times.length) {
         throw new Error("positions and times arrays must have the same length.");
     }
@@ -26902,6 +26906,11 @@ onUpdate, easing = easeLinear // Default easing is linear
         onUpdate(currentPosition);
         // Continue the animation if not finished
         if (elapsed < times[times.length - 1]) {
+            requestAnimationFrame(animate);
+        }
+        else if (loop) {
+            // Reset start time for looping
+            startTime = null;
             requestAnimationFrame(animate);
         }
     };

@@ -28,7 +28,8 @@ export function animateBetween(
   end: Vector2,
   duration: number, // Duration in seconds
   onUpdate: (position: Vector2) => void,
-  easing: (t: number) => number = easeLinear
+  easing: (t: number) => number = easeLinear,
+  loop: boolean = false
 ) {
   let startTime: number | null = null;
 
@@ -49,6 +50,9 @@ export function animateBetween(
     // Continue the animation if not finished
     if (t < 1) {
       requestAnimationFrame(animate);
+    } else if (loop) {
+      startTime = null;
+      requestAnimationFrame(animate);
     }
   };
 
@@ -60,7 +64,8 @@ export function animateCustom(
   positions: Vector2[], // Array of Vector2 positions [start, intermediate1, ..., end]
   times: number[], // Array of times in seconds corresponding to each position
   onUpdate: (position: Vector2) => void,
-  easing: (t: number) => number = easeLinear // Default easing is linear
+  easing: (t: number) => number = easeLinear, // Default easing is linear
+  loop: boolean = false
 ) {
   if (positions.length !== times.length) {
     throw new Error("positions and times arrays must have the same length.");
@@ -105,6 +110,10 @@ export function animateCustom(
 
     // Continue the animation if not finished
     if (elapsed < times[times.length - 1]) {
+      requestAnimationFrame(animate);
+    } else if (loop) {
+      // Reset start time for looping
+      startTime = null;
       requestAnimationFrame(animate);
     }
   };

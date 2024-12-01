@@ -947,7 +947,8 @@ declare function animateBetween(start: Vector2, end: Vector2, duration: number, 
 onUpdate: (position: Vector2) => void, easing?: (t: number) => number): void;
 declare function animateCustom(positions: Vector2[], // Array of Vector2 positions [start, intermediate1, ..., end]
 times: number[], // Array of times in seconds corresponding to each position
-onUpdate: (position: Vector2) => void, easing?: (t: number) => number): void;
+onUpdate: (position: Vector2) => void, easing?: (t: number) => number, // Default easing is linear
+loop?: boolean): void;
 
 /**
  * Helper function to convert from degrees to radians
